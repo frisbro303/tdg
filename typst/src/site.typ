@@ -156,8 +156,8 @@
   }
 }
 
-// A PDF's title, and for posts their author, date and reading time, as on the web.
-#let _pdf-header(title, date: none, minutes: none, author: none) = {
+// A PDF's title, and for posts their author and date.
+#let _pdf-header(title, date: none, author: none) = {
   align(center, block(below: 1.8em)[
     #text(1.7em, weight: "bold", title)
     #if date != none {
@@ -165,8 +165,7 @@
       v(0.2em)
       context {
         let author = _author(author)
-        let parts = (if author != none { author }, date.display("[month repr:long] [day padding:none], [year]"),
-          if minutes != none [#minutes min read]).filter(x => x != none)
+        let parts = (if author != none { author }, date.display("[month repr:long] [day padding:none], [year]")).filter(x => x != none)
         text(0.9em, fill: luma(100), parts.join[ · ])
       }
     }
@@ -193,7 +192,7 @@
   let page = (kind: "post", slug: slug, url: url, title: title, date: date, description: description, pdf: pdf,
     minutes: calc.max(1, calc.ceil(words / 200)), pdf-page: pdf-page, author: author)
   [#metadata((url: url, title: title, date: date, description: description)) <tdg-post>]
-  _page(page, _pdf-header(title, date: date, minutes: page.minutes, author: author), body)
+  _page(page, _pdf-header(title, date: date, author: author), body)
 }
 
 /// A page that isn't a post, such as an about page or a CV: no date, no footer; it lays out its own headings. Use
