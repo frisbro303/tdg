@@ -1,5 +1,5 @@
 // What pages are made of: interactive 3D figures, theorems, callouts, source listings and images. Every function
-// works for HTML (styled by the site's theme, from assets/components.css) and for PDF (laid out by Typst).
+// works for HTML (styled by the page's stylesheets, with assets/components.css) and for PDF (laid out by Typst).
 
 #import "util.typ": *
 
@@ -43,8 +43,7 @@
     // CSS pixels (420 by default, as wgw's), with the site's colors from its stylesheets.
     let site = state("tdg-site", none).get()
     let css = if site == none { "" } else {
-      let theme = if site.theme-style { read("../assets/" + site.theme.css) } else { "" }
-      read("../assets/components.css") + theme + site.css.map(c => if type(c) == str { "" } else { read(c) }).join()
+      read("../assets/components.css") + (page-css.get() + site.css).map(css-text).join(default: "")
     }
     let px = if type(height) == length { height.pt() * 4 / 3 }
       else if type(height) == str and height.ends-with("px") { float(height.trim("px", at: end)) } else { 420 }

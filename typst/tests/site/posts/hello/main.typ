@@ -1,5 +1,5 @@
 #import "../../../../lib.typ": *
-#show: post.with("hello", title: "Hello", date: "2026-11-03", description: "A first post.")
+#show: blog.post.with("hello", title: "Hello", date: "2026-11-03", description: "A first post.")
 = A section
 Inline $x^2$, and @thm-hopf.
 #theorem(title: [Hopf])[Every map $S^3 -> S^2$ of Hopf invariant one is a fibration.] <thm-hopf>

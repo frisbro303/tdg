@@ -1,21 +1,23 @@
-#import "@local/tdg:0.2.0": *
-#show: doc.with("sites", title: "Sites", order: 2, description: "A tdg site: its settings, its pages, and its files.")
+#import "@local/tdg:0.1.0": *
+#show: docs.doc.with("sites", title: "Sites", order: 2, description: "A tdg site: its settings, its pages and their templates, and its files.")
 
 = The site file
 
 A site is a Typst file that sets it up with `site` and includes its pages, in any order:
 
 ```typ
-#import "@preview/tdg:0.2.0": *
+#import "@preview/tdg:0.1.0": *
 #show: site.with(
   title: "Endless Quest",
   author: "Felix",
-  url: "https://example.com/",                 // gives posts a feed
+  url: "https://example.com/",
+  feed: "post",                                // posts' Atom feed, feed.xml
   icon: path("theme/icon.png"),
   nav: (("blog", ""), ("about", "about/"), ("GitHub", "https://github.com/me")),
   footer: (links: (email: "mailto:me@example.com")),
 )
 
+#include "index.typ"
 #include "posts/hopf-fibrations/main.typ"
 #include "posts/diffusion-maps/main.typ"
 #include "about.typ"
@@ -25,36 +27,95 @@ A site is a Typst file that sets it up with `site` and includes its pages, in an
   columns: 2,
   [*setting*], [],
   [`title`], [the site's name],
-  [`theme`], [`"blog"` (the default) or `"docs"`, or your own: see #link("/themes/")[themes]],
-  [`author`], [posts' author (unless a post names its own), and the feed's],
-  [`url`], [where the site is published: gives posts an Atom feed, `feed.xml`],
+  [`author`], [pages' author (unless a page names its own), and the feed's],
+  [`url`], [where the site is published, which a feed needs],
+  [`feed`], [a kind of page to publish as an Atom feed, `feed.xml`, such as `"post"`: its pages need a `date`],
   [`icon`], [an image for the header and the browser's tab, as a path],
-  [`css`, `js`], [the site's own stylesheets and scripts: paths, or URLs],
-  [`theme-style`], [`false` to use only the site's stylesheets, not the theme's],
-  [`fonts`], [a stylesheet URL for web fonts, instead of the theme's],
+  [`css`, `js`], [stylesheets and scripts for every page, after its template's: paths, or URLs],
   [`nav`], [the header's links: `(label, href)` pairs, `href` from the site's root, or a full URL],
   [`footer`], [`(links: (label: url))`, and `copyright: "..."` for a © line],
-  [`home`], [a heading above the home page's posts],
   [`credit`], [a small "tdg-built website" link in the footer's corner; `false` hides it],
-  [`search`], [a search box in the docs' sidebar],
+  [`search`], [a search box in the docs' sidebar, searching pages whose template is searchable],
   [`files`], [other files to publish, as paths: downloads, data, ...],
 )
 
 = Pages
 
-Each page starts with a show rule saying what it is. Its slug is its URL.
+Each page starts with a template: a show rule saying what kind of page it is. Its slug gives its URL. Every
+template takes `title`, `description`, `author` (by default the site's), `pdf` (also publish it as a PDF,
+`<url><slug>.pdf`) and `pdf-page` (its PDF's page settings, such as `(margin: 2cm)`), and its own settings.
+tdg's #link("/themes/")[themes] are templates:
 
 #table(
   columns: 3,
   [*template*], [*URL*], [],
-  [`post.with(slug, title:, date:, author:, description:, pdf: true)`], [`posts/<slug>/`],
-    [dated, with its author, listed newest first on the home page and in the feed, and also published as a PDF linked under its title],
-  [`standalone.with(slug, title:, pdf: false)`], [`<slug>/`], [a page that isn't a post, such as an about page or a CV: no date, no footer; it lays out its own headings],
-  [`doc.with(slug, title:, order:, description:)`], [`<slug>/`, or the front page for `"index"`], [documentation: a sidebar in `order`, previous and next links, and the page's contents],
+  [`blog.post.with(slug, title:, date:, updated:)`], [`posts/<slug>/`],
+    [dated, with its author, and also a PDF linked under its title; `date` and `updated` are `"YYYY-MM-DD"` or a `datetime`],
+  [`website.home.with(slug, title:)`], [the front page], [the site's home page, with no title of its own, for an introduction and listings],
+  [`website.standalone.with(slug, title:)`], [`<slug>/`, or the front page for `"index"`], [a page such as an about page or a CV: no footer; it lays out its own headings],
+  [`docs.doc.with(slug, title:, order:)`], [`<slug>/`, or the front page for `"index"`], [documentation: a sidebar in `order`, previous and next links, the page's contents, and search],
 )
 
-A post's `date` is a `datetime` or `"YYYY-MM-DD"`. The home page lists the posts, unless a doc called `index` is
-the front page.
+The blog theme has the website theme's templates too (`blog.home`, `blog.standalone`), and the docs theme a
+`standalone` of its own.
+
+= Listings
+
+`listing(kind)` lists the site's pages of a kind as links, newest first when they have a `date`, and otherwise by
+title. A blog's home page is a page with its posts:
+
+```typ
+// index.typ
+#import "@preview/tdg:0.1.0": *
+#show: blog.home.with("index", title: "Endless Quest")
+
+= blog
+#listing("post")
+```
+
+`item:` lists each page your own way: a function from the page's settings (`page.title`, `page.url`,
+`page.date`, ...) to content.
+
+= Your own templates
+
+`template(kind, ...)` makes a kind of page: where its pages go, the settings they take, and how they look. A site
+keeps its own in a file its pages import, which is its own #link("/themes/")[theme]:
+
+```typ
+#let note = template("note", ..blog.look,                     // the blog theme's look
+  url: slug => "notes/" + slug + "/",                          // its URL from its slug
+  fields: (topic: none, date: none),                          // its own settings, with defaults
+  required: ("topic",),                                       // which a page must give
+  prepare: page => page + (date: if page.date != none { to-date(page.date) }),  // to check or convert them
+  header: page => html.elem("h1", page.title + " · " + page.topic),            // HTML above its body
+  pdf-header: pdf-title,                                      // what's above its body in its PDF
+)
+
+#show: note.with("tori", title: "Tori", topic: "geometry")
+```
+
+#table(
+  columns: 2,
+  [*setting*], [],
+  [`url`], [a function from the slug to the page's URL from the site's root; by default `<slug>/`, and `""` (the front page) for `"index"`],
+  [`fields`, `required`], [the template's own settings with their defaults, and which a page must give],
+  [`prepare`], [a function from the page's settings to the ones used: `to-date` turns `"YYYY-MM-DD"` into a `datetime`],
+  [`header`], [a function from the page to the HTML above its body; by default its title as `<h1>`],
+  [`main`], [a function from the site, the page and its body to the whole of `<main>`, instead of `header` and the body],
+  [`pdf-header`], [a function from the page to what's above its body in its PDF: `pdf-title` is its title, and for dated pages their author and date],
+  [`pdf`], [whether its pages are also PDFs, unless a page says otherwise],
+  [`footer`], [whether its pages have the site's footer],
+  [`class`], [a class for its pages' `<body>`, for stylesheets],
+  [`search`], [whether its pages are in the site's search],
+  [`tab-title`], [a function from the site and the page to the browser tab's title],
+  [`css`], [its stylesheets: tdg's (`"blog.css"`, `"docs.css"`), paths, or URLs; every page also has tdg's `components.css`],
+  [`fonts`], [a stylesheet URL for web fonts],
+  [`layout`], [a function from the site, the page and its `<main>` to the page's `<html>`: tdg's `page-layout`, or your own],
+)
+
+The page these functions get is its settings, with `kind`, `slug` and `url`: the same dictionary a listing's
+`item` gets. tdg's own templates are made this way (`typst/src/themes/`), and their parts can be borrowed:
+`post-header` (a dated page's title, date and PDF link), `pdf-title` and `docs-main` (the docs' layout).
 
 = Files
 

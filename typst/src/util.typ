@@ -53,3 +53,16 @@
 #let publish(file) = if type(file) != str and file != none {
   [#metadata((path: file, out: path-string(file))) <tdg-asset>]
 }
+
+// ---- Stylesheets: a template's `css` is tdg's own (a name: "blog.css", "docs.css"), paths, or URLs.
+
+#let _builtin-css = ("blog.css", "docs.css")
+
+/// The stylesheets of the page being laid out, as its template gives them.
+#let page-css = state("tdg-page-css", ())
+
+/// A stylesheet's URL from the current page. Call within `context`.
+#let css-url(css) = if type(css) == str and css in _builtin-css { root() + "_tdg/" + css } else { file-url(css) }
+
+/// A stylesheet's text, for what Typst draws with the page's colors (widgets' stills); a URL's isn't read.
+#let css-text(css) = if type(css) == str { if css in _builtin-css { read("../assets/" + css) } else { "" } } else { read(css) }

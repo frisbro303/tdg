@@ -1,6 +1,7 @@
-// Themes: how a site's pages are laid out as HTML. A theme is a dictionary: its stylesheet (in assets/), its fonts,
-// and a `layout` function from the site's settings, the page's details and its body to the page's <html>.
-// Every theme also gets assets/components.css, which lays out what the components make.
+// Layout: how a site's pages are laid out as HTML. A template's look is its stylesheets, its fonts and a `layout`
+// function from the site's settings, the page (with its look) and its <main> content to the page's <html>; tdg's
+// is `page-layout`. What goes in <main> is the template's too (site.typ). Every page also gets
+// assets/components.css, which lays out what the components make.
 
 #import "util.typ": *
 
@@ -11,18 +12,17 @@
   if href.contains(":") or href.starts-with("//") or href.starts-with("#") { href } else { root() + href.trim("/", at: start) }
 }
 
-/// The page's <head>: its title and description, the theme's and site's styles and scripts, and wgw's when the
-/// page has a widget.
-#let head(site, page, theme) = context {
+/// The page's <head>: its title and description, its template's and the site's styles and scripts, and wgw's when
+/// the page has a widget.
+#let head(site, page) = context {
   let r = root()
-  let title = if page.kind == "doc" and page.url != "" { page.title + " · " + site.title } else { page.title }
   html.elem("head")[
     #html.elem("meta", attrs: (charset: "utf-8"))
     #html.elem("meta", attrs: (name: "viewport", content: "width=device-width, initial-scale=1"))
-    #html.elem("title", title)
+    #html.elem("title", page.at("tab-title", default: page.title))
     #if page.description != none { html.elem("meta", attrs: (name: "description", content: page.description)) }
     #if page.at("author", default: none) not in (none, auto) { html.elem("meta", attrs: (name: "author", content: page.author)) }
-    #let fonts = if site.fonts != none { site.fonts } else { theme.fonts }
+    #let fonts = page.at("fonts", default: none)
     #if fonts != none {
       if fonts.contains("fonts.googleapis.com") {
         html.elem("link", attrs: (rel: "preconnect", href: "https://fonts.googleapis.com"))
@@ -31,7 +31,7 @@
       html.elem("link", attrs: (rel: "stylesheet", href: fonts))
     }
     #html.elem("link", attrs: (rel: "stylesheet", href: r + "_tdg/components.css"))
-    #if site.theme-style { html.elem("link", attrs: (rel: "stylesheet", href: r + "_tdg/" + theme.css)) }
+    #for css in page.at("css", default: ()) { html.elem("link", attrs: (rel: "stylesheet", href: css-url(css))) }
     #for css in site.css { html.elem("link", attrs: (rel: "stylesheet", href: file-url(css))) }
     #if site.icon != none { html.elem("link", attrs: (rel: "icon", href: file-url(site.icon))) }
     #html.elem("script", attrs: (src: r + "_tdg/theme.js"))
@@ -39,10 +39,10 @@
     #if query(<tdg-widget>).any(m => m.value == page.url) {
       html.elem("script", attrs: (type: "module", src: r + "_tdg/wgw/wgw.js"))
     }
-    #if site.url != none and page.kind == "post" or page.url == "" and site.url != none {
+    #if site.url != none and site.feed != none {
       html.elem("link", attrs: (rel: "alternate", type: "application/atom+xml", href: r + "feed.xml", title: site.title))
     }
-    #if site.search and page.kind == "doc" {
+    #if site.search and query(<tdg-search>).any(m => m.value.url == page.url) {
       html.elem("script", attrs: (type: "module", src: r + "_tdg/search.js"))
     }
   ]
@@ -94,18 +94,19 @@
   body
 }
 
-#let _document(site, page, theme, body-attrs, main) = html.elem("html", attrs: (lang: site.lang))[
-  #head(site, page, theme)
+#let _document(site, page, body-attrs, main) = html.elem("html", attrs: (lang: site.lang))[
+  #head(site, page)
   #html.elem("body", attrs: body-attrs)[
     #html.elem("div", attrs: (class: "page"))[
       #header(site)
       #html.elem("main", main)
-      #if page.kind != "page" { footer(site) }
+      #if page.at("footer", default: true) { footer(site) }
     ]
   ]
 ]
 
-#let _post-header(page) = html.elem("div", attrs: (class: "post-header"))[
+/// A dated page's header: its title, then its author, date, when it was updated and a link to its PDF.
+#let post-header(page) = html.elem("div", attrs: (class: "post-header"))[
   #html.elem("h1", page.title)
   #html.elem("div", attrs: (class: "meta"))[
     #if page.at("author", default: none) not in (none, auto) [#html.elem("span", attrs: (class: "author"), page.author) · ]
@@ -116,22 +117,11 @@
   ]
 ]
 
-/// A page of posts: the home page.
-#let _home(site, posts) = {
-  if site.home != none { html.elem("h2", site.home) }
-  for post in posts {
-    context html.elem("a", attrs: (class: "row", href: relative(post.url, page-url.get())))[
-      #html.elem("time", attrs: (datetime: post.date.display()), post.date.display())
-      #html.elem("div")[
-        #html.elem("h3", post.title)
-        #if post.description != none { html.elem("p", post.description) }
-      ]
-    ]
-  }
-}
-
-#let _docs(site, page, body) = context {
-  let docs = query(<tdg-doc>).map(m => m.value).sorted(key: d => (d.order, d.title))
+/// A doc's <main>: a sidebar of the site's pages of its kind, in their `order`, then the page with previous and next
+/// links, and its contents.
+#let docs-main(site, page, body) = context {
+  let docs = query(<tdg-page>).map(m => m.value).filter(d => d.kind == page.kind)
+    .sorted(key: d => (d.at("order", default: 0), d.title))
   let at = docs.position(d => d.url == page.url)
   let start = query(<tdg-start>).find(m => m.value == page.url).location()
   let end = query(<tdg-end>).find(m => m.value == page.url).location()
@@ -167,24 +157,16 @@
   ]
 }
 
-#let _layout(site, page, theme, body) = {
-  let main = if page.kind == "post" {
-    _post-header(page)
-    html.elem("article", body)
-  } else if page.kind == "home" {
-    body
-  } else if page.kind == "doc" {
-    _docs(site, page, body)
-  } else {
-    html.elem("article", body)
-  }
-  let attrs = if page.kind == "home" { (class: "home") } else if page.kind == "doc" { (class: "docs") } else { (:) }
-  _relative-links(_anchored(_document(site, page, theme, attrs, main)))
+/// tdg's layout of a page: its <head>, the site's header, the page's <main> and the site's footer (unless its
+/// template has none), with headings' ids and links from the site's root made relative.
+#let page-layout(site, page, main) = {
+  let class = page.at("class", default: none)
+  _relative-links(_anchored(_document(site, page, if class != none { (class: class) } else { (:) }, main)))
 }
 
-/// tdg's themes. `blog`: for writing, a serif text column and posts by date. `docs`: for software, sans-serif, with
-/// a sidebar of pages and their contents.
-#let themes = (
-  blog: (css: "blog.css", fonts: "https://fonts.googleapis.com/css2?family=IBM+Plex+Mono&family=Libertinus+Serif:ital,wght@0,400;0,600;1,400&display=swap", layout: _layout, home: _home),
-  docs: (css: "docs.css", fonts: none, layout: _layout, home: _home),
+/// The looks of tdg's themes. `blog` (also the website theme's): a serif text column. `docs`: sans-serif, for a
+/// sidebar of pages and their contents.
+#let looks = (
+  blog: (css: ("blog.css",), fonts: "https://fonts.googleapis.com/css2?family=IBM+Plex+Mono&family=Libertinus+Serif:ital,wght@0,400;0,600;1,400&display=swap", layout: page-layout),
+  docs: (css: ("docs.css",), fonts: none, layout: page-layout),
 )

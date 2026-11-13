@@ -1,6 +1,6 @@
 [package]
 name = "tdg"
-version = "0.2.0"
+version = "0.1.0"
 entrypoint = "lib.typ"
 compiler = "0.15.0"
 authors = ["Felix Granum <https://github.com/frisbro303>"]

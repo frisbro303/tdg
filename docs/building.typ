@@ -1,5 +1,5 @@
-#import "@local/tdg:0.2.0": *
-#show: doc.with("building", title: "Building", order: 5, description: "Compiling a tdg site, watching it, PDFs, and publishing to GitHub Pages.")
+#import "@local/tdg:0.1.0": *
+#show: docs.doc.with("building", title: "Building", order: 5, description: "Compiling a tdg site, watching it, PDFs, and publishing to GitHub Pages.")
 
 = Compiling
 

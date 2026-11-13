@@ -1,10 +1,12 @@
-#import "@local/tdg:0.2.0": *
-#show: doc.with("index", title: "Overview", order: 1, description: "tdg: websites from Typst, built by typst compile.")
+#import "@local/tdg:0.1.0": *
+#show: docs.doc.with("index", title: "Overview", order: 1, description: "tdg: websites from Typst, built by typst compile.")
 
 tdg makes websites from #link("https://typst.app")[Typst]: blogs, and documentation for software. It's a Typst
 package, so a whole site, every page, its PDFs, its feed and its files, comes out of one `typst compile`, with no
 other tools. Pages have Typst's math, which browsers show as MathML, and tdg's components: numbered theorems,
 callouts, API references generated from Python docstrings, and interactive 3D figures.
+
+#callout(title: [Beta])[tdg is in beta: its API still changes, without deprecations.]
 
 #widget(path("examples/torus.wgw"), view: (-60, 35), caption: [A torus colored by its Gaussian curvature,
   $K = cos v \/ (r (R + r cos v))$, built by a widget in Rust. Drag it; move the sliders.])
@@ -17,19 +19,27 @@ A site is a file that sets it up and includes its pages:
 
 ```typ
 // site.typ
-#import "@preview/tdg:0.2.0": *
-#show: site.with(title: "My notes", author: "Me", url: "https://me.github.io/")
+#import "@preview/tdg:0.1.0": *
+#show: site.with(title: "My notes", author: "Me", url: "https://me.github.io/", feed: "post")
 
+#include "index.typ"
 #include "posts/hopf/main.typ"
 #include "about.typ"
 ```
 
-Each page starts with what it is:
+Each page starts with a template, saying what it is: here the blog theme's home page, listing the posts, and a post.
+
+```typ
+// index.typ
+#import "@preview/tdg:0.1.0": *
+#show: blog.home.with("index", title: "My notes")
+#listing("post")
+```
 
 ```typ
 // posts/hopf/main.typ
-#import "@preview/tdg:0.2.0": *
-#show: post.with("hopf", title: "Hopf fibrations", date: "2026-11-03")
+#import "@preview/tdg:0.1.0": *
+#show: blog.post.with("hopf", title: "Hopf fibrations", date: "2026-11-03")
 
 #theorem(title: [Hopf])[Every map $S^3 -> S^2$ of Hopf invariant one is a fibration.]
 ```
@@ -46,5 +56,5 @@ A page compiled on its own is a document of its own: `typst compile posts/hopf/m
 
 - #link("/sites/")[Sites]: `site`, posts, pages and docs, and how files are published
 - #link("/components/")[Components]: widgets, theorems, callouts, source listings, images, API references
-- #link("/themes/")[Themes]: tdg's blog and docs themes, and your own
+- #link("/themes/")[Themes]: tdg's website, blog and docs themes, and your own
 - #link("/building/")[Building]: compiling, watching, PDFs, and publishing to GitHub Pages

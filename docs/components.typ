@@ -1,7 +1,7 @@
-#import "@local/tdg:0.2.0": *
-#show: doc.with("components", title: "Components", order: 3, description: "tdg's components: widgets, theorems, callouts, source listings, images, API references.")
+#import "@local/tdg:0.1.0": *
+#show: docs.doc.with("components", title: "Components", order: 3, description: "tdg's components: widgets, theorems, callouts, source listings, images, API references.")
 
-Every component works in HTML (styled by the site's theme) and in PDF (laid out by Typst), so a page is both a web
+Every component works in HTML (styled by the page's stylesheets) and in PDF (laid out by Typst), so a page is both a web
 page and a printable document.
 
 = Widgets
