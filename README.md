@@ -1,6 +1,9 @@
-<img src="assets/tdg-icon.svg" width="56" alt="">
-
-# Typst Docs Generator
+<h1>
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="assets/banner-dark.svg">
+    <img src="assets/banner-light.svg" height="56" alt="tdg: Typst Docs Generator">
+  </picture>
+</h1>
 
 Websites from [Typst](https://typst.app), built by `typst compile` alone: blogs, and documentation for software.
 tdg is a Typst package: a site is a Typst file that includes its pages, and Typst's bundle export writes the whole
