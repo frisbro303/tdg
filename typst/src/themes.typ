@@ -73,7 +73,7 @@
         site.footer.at("links", default: (:)).pairs().map(((label, url)) => html.elem("a", attrs: (href: url), label)).join())
     }
     #if site.credit {
-      html.elem("div", attrs: (class: "credit"), html.elem("a", attrs: (href: "https://github.com/frisbro303/tdg"))[
+      html.elem("div", attrs: (class: "credit"), html.elem("a", attrs: (href: "https://github.com/frisbro303/tdg", target: "_blank", rel: "noopener"))[
         #html.elem("img", attrs: (src: root() + "_tdg/tdg.svg", alt: "", width: "14", height: "14")) tdg-built website
       ])
     }
