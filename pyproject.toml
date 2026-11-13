@@ -6,7 +6,7 @@ readme = "README.md"
 requires-python = ">=3.11"
 license = "MIT"
 authors = [{ name = "Felix Granum" }]
-dependencies = ["jinja2>=3.1"]
+dependencies = ["jinja2>=3.1", "griffe>=1.5"]
 
 [project.scripts]
 tdg = "tdg.cli:main"
@@ -17,3 +17,6 @@ build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/tdg"]
+
+[tool.hatch.build.targets.wheel.force-include]
+"typst" = "tdg/_typst"  # the Typst library, bundled

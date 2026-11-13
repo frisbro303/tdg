@@ -3,7 +3,7 @@ import tomllib
 from dataclasses import dataclass, field
 from pathlib import Path
 
-KINDS = ("post", "page")
+KINDS = ("post", "page", "doc")
 
 
 class ConfigError(Exception):
@@ -12,12 +12,14 @@ class ConfigError(Exception):
 
 @dataclass
 class Section:
-    """A folder of sources that publish together: posts (dated, listed on the home page) or pages."""
+    """A folder of sources that publish together: posts (dated, listed on the home page), pages, or docs (with a
+    sidebar, in the order of `pages`, and `index` as the section's front page)."""
 
     dir: str  # the folder, relative to the site
-    kind: str = "post"  # "post" or "page"
+    kind: str = "post"  # "post", "page" or "doc"
     url: str = ""  # where entries publish: "posts" puts posts/x.typ at posts/x/
     pdf: bool = False  # also publish each entry as <slug>/<slug>.pdf
+    pages: list = field(default_factory=list)  # docs: the sidebar's order, by slug; others follow alphabetically
 
 
 @dataclass
@@ -29,10 +31,16 @@ class Config:
     url: str = ""  # where the site is published, for its feed
     icon: str = ""  # an image in the site, shown in the header and as the favicon
     fonts: str = ""  # a stylesheet URL for web fonts
-    default_style: bool = True  # include tdg's own stylesheet and theme switch
+    theme: str = "blog"  # tdg's "blog" or "docs", or a folder of the site's own (templates/ and static/)
+    default_style: bool = True  # include the theme's stylesheets and theme switch
     css: list = field(default_factory=list)  # the site's stylesheets
     js: list = field(default_factory=list)  # the site's scripts, loaded in <head>
-    copy: list = field(default_factory=list)  # folders published as they are
+    copy: list | dict = field(default_factory=list)  # published as they are: [folder], or {published: source}
+    typst_root: str = "."  # Typst's root, from the site: "/x" in a page means <typst_root>/x, here and on the site
+    wgw: str = ""  # a wgw build (dist/) to use instead of the one bundled with tdg
+    api: dict = field(default_factory=dict)  # {python: {paths: [...], modules: [...]}, page: slug of the reference}
+    search: bool = False  # index the site with Pagefind, and show a search box
+    credit: bool = True  # a small "made with tdg" link in the footer
     nav: list = field(default_factory=list)  # [{label, href}] in the header; href is from the site's root
     footer: dict = field(default_factory=dict)  # {copyright, links: {label: url}}
     home: str = ""  # the home page's heading, above the list of posts
@@ -75,3 +83,9 @@ def load(root):
             raise ConfigError(f"{path}: section {section.dir}: no such folder")
         config.sections.append(section)
     return config
+
+
+def copies(config):
+    """The config's `copy` as {published path: source path}."""
+    items = config.copy.items() if isinstance(config.copy, dict) else ((c, c) for c in config.copy)
+    return {published.strip("/"): config.root / source for published, source in items}

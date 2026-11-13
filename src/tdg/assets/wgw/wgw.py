@@ -60,8 +60,10 @@ def grid_faces(nu, nv, wrap_u=False, wrap_v=False):
     """Triangles over a grid of vertices numbered `u * nv + v`.
 
     Args:
-        nu, nv: The grid's size.
-        wrap_u, wrap_v: Join the last row (or column) to the first, as on a cylinder or torus.
+        nu: The grid's size along u.
+        nv: The grid's size along v.
+        wrap_u: Join the last row to the first, as on a cylinder or torus.
+        wrap_v: Join the last column to the first.
 
     Returns:
         `(m, 3)` faces, two per grid cell.
@@ -78,10 +80,11 @@ def surface(f, u=(0, 1), v=(0, 1), n=64, wrap_u=False, wrap_v=False):
 
     Args:
         f: `f(u, v) -> (x, y, z)`, taking and returning arrays.
-        u, v: The parameters' ranges.
+        u: The range of the first parameter.
+        v: The range of the second.
         n: Samples along each parameter.
-        wrap_u, wrap_v: Whether the surface closes up in that parameter; the range's end is then left out, as it
-            would repeat the start.
+        wrap_u: Whether the surface closes up in u; the range's end is then left out, as it would repeat the start.
+        wrap_v: Whether it closes up in v.
 
     Returns:
         `(vertices, faces, u, v)`, with each vertex's parameters.
@@ -137,7 +140,8 @@ def rescale(values, lo=None, hi=None):
 
     Args:
         values: Any array.
-        lo, hi: The values that map to 0 and 1 (by default, their min and max); values beyond are clipped.
+        lo: The value that maps to 0 (by default, the smallest); values below are clipped.
+        hi: The value that maps to 1 (by default, the largest); values above are clipped.
     """
     values = np.asarray(values, float)
     lo = values.min() if lo is None else lo
@@ -282,6 +286,7 @@ class Mesh(Layer):
 
     @property
     def face_areas(self):
+        """Each face's area `(m)`."""
         return 0.5 * np.linalg.norm(self._cross(), axis=1)
 
     @property
@@ -303,6 +308,7 @@ class Mesh(Layer):
 
     @property
     def area(self):
+        """The total area."""
         return float(self.face_areas.sum())
 
     def _cross(self):
@@ -379,7 +385,8 @@ class Slider:
     """A slider.
 
     Attributes:
-        min, max: Its range; with `log`, `min` must be positive.
+        min: Its lowest value; with `log`, it must be positive.
+        max: Its highest value.
         value: Where it starts.
         step: Its step; by default, a 200th of the range.
         log: Move evenly in powers of ten (in steps of 0.01 of a decade), for a parameter spanning orders of
@@ -413,7 +420,9 @@ Scene = dict  # layers by name: {"mesh": Mesh(...), "dot": Points(...), "gone": 
 class Widget:
     """A widget: what a figure starts as, its controls, and how it responds to them.
 
-    A widget file's `widget(mesh)` (or `widget()`, for a figure without a mesh) returns one.
+    A widget file's `widget(mesh)` (or `widget()`, for a figure without a mesh) returns one. Every field is
+    optional: a widget with no controls, no `on_pick` or no grid just leaves them out, and `Widget(scene=...)` alone
+    is a figure built in Python that doesn't respond to anything.
 
     `on_change` and `on_pick` return a **scene**: layers by name. Each replaces the layer of that name exactly as
     given; `None` removes one; layers not named are kept. A single layer means `{"mesh": layer}`, and `None`

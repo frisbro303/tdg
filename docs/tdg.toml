@@ -1,0 +1,13 @@
+# tdg's docs, built with tdg: tdg build docs
+[site]
+title = "tdg"
+url = "https://frisbro303.github.io/tdg/"
+theme = "docs"
+search = true
+nav = [{ label = "GitHub", href = "https://github.com/frisbro303/tdg" }]
+copy = ["examples"]
+
+[[sections]]
+dir = "."
+kind = "doc"
+pages = ["index", "sites", "typst", "themes", "commands"]

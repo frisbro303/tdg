@@ -15,11 +15,11 @@ from pathlib import Path
 import jinja2
 from markupsafe import Markup
 
-from tdg import typst
-from tdg.config import Config, Section
+from tdg import api, typst
+from tdg.config import Config, Section, copies
 
 HERE = Path(__file__).parent
-THEME = HERE / "themes" / "default"
+THEMES = HERE / "themes"  # base (shared templates and components), and the themes built on it
 WGW = HERE / "assets" / "wgw"
 RESERVED = {"_tdg", "feed.xml", "index.html"}
 
@@ -44,6 +44,8 @@ class Entry:
     date: datetime.datetime | None = None
     minutes: int = 0
     widgets: bool = False
+    published: list = field(default_factory=list)  # (attribute, path) of files the page's figures load
+    toc: list = field(default_factory=list)  # [{level, id, text}] of the page's h2 and h3
     warnings: list = field(default_factory=list)
 
     @property
@@ -93,12 +95,24 @@ def find_entries(config):
                 continue
             slug = slugify(path.stem)
             url = f"{section.url.strip('/')}/{slug}/".lstrip("/")
+            if section.kind == "doc" and slug == "index":  # a docs section's front page
+                url = f"{section.url.strip('/')}/".lstrip("/")
             if url.split("/")[0] in RESERVED:
                 raise BuildError(f"{path}: the URL /{url} is reserved for tdg")
             if url in urls:
                 raise BuildError(f"{path} and {urls[url]} both publish to /{url}")
             urls[url] = path
             entries.append(Entry(section=section, slug=slug, path=path, source=source, url=url))
+    for section in config.sections:  # docs in their sidebar's order, the rest alphabetically after
+        if section.kind == "doc":
+            order = {slug: i for i, slug in enumerate(section.pages)}
+            missing = set(section.pages) - {e.slug for e in entries if e.section is section}
+            if missing:
+                raise BuildError(f"tdg.toml: section {section.dir}: no pages {', '.join(sorted(missing))}")
+            mine = sorted((e for e in entries if e.section is section), key=lambda e: (order.get(e.slug, len(order)), e.slug))
+            first = next(i for i, e in enumerate(entries) if e.section is section)
+            others = [e for e in entries if e.section is not section]
+            entries = others[:first] + mine + others[first:]
     return entries
 
 
@@ -132,32 +146,63 @@ def _between(page, start, end):
     return page[i + len(start):j] if i >= 0 and j > i else ""
 
 
-def compile_entry(entry, config, out, now):
+def relative_links(body, root):
+    """Root-relative links ("/examples/x.py") made relative to a page at root, so a site works under any path."""
+    return re.sub(r'((?:href|src|data-src|data-widget)=")/(?!/)', lambda m: m.group(1) + (root or "./"), body)
+
+
+def anchor_headings(body):
+    """Ids for headings that lack them, and the page's contents: its h2 and h3."""
+    toc, used = [], set(re.findall(r'id="([^"]+)"', body))
+
+    def anchor(m):
+        level, attrs, text = m.group(1), m.group(2), m.group(3)
+        found = re.search(r'id="([^"]+)"', attrs)
+        if found:
+            ident = found.group(1)
+        else:
+            base = slugify(re.sub(r"<[^>]+>", "", text)) or "section"
+            ident, n = base, 2
+            while ident in used:
+                ident, n = f"{base}-{n}", n + 1
+            used.add(ident)
+            attrs += f' id="{ident}"'
+        toc.append({"level": int(level), "id": ident, "text": Markup(re.sub(r"<(?!/?code)[^>]+>", "", text))})
+        return f"<h{level}{attrs}>{text}</h{level}>"
+
+    body = re.sub(r"<h([23])([^>]*)>(.*?)</h\1>", anchor, body, flags=re.S)
+    return body, toc
+
+
+def compile_entry(entry, config, out, now, inputs):
     """Compile an entry and publish the files beside it; fills in its title, head, body and so on."""
     target = out / entry.url
     if entry.path.is_dir():
         shutil.copytree(entry.path, target, ignore=publishable(config), dirs_exist_ok=True)
     target.mkdir(parents=True, exist_ok=True)
     output = target / "index.html"
-    warnings = typst.compile(entry.source, output, config.root)
+    typst_root = (config.root / config.typst_root).resolve()
+    warnings = typst.compile(entry.source, output, typst_root, inputs=inputs)
     if warnings:
         entry.warnings.append(warnings)
     if entry.section.pdf:
-        typst.compile(entry.source, target / f"{entry.slug}.pdf", config.root, fmt="pdf")
+        typst.compile(entry.source, target / f"{entry.slug}.pdf", typst_root, fmt="pdf", inputs=inputs)
     page = output.read_text()
     entry.head = _between(page, "<head>", "</head>")
-    entry.body = _between(page, "<body>", "</body>")
+    entry.body = relative_links(_between(page, "<body>", "</body>"), entry.root)
+    entry.body, entry.toc = anchor_headings(entry.body)
     # Typst escapes these already, so they're reused as HTML.
     title = re.search(r"<title>(.*?)</title>", entry.head)
     entry.title = title.group(1) if title else html.escape(entry.path.stem.replace("-", " ").replace("_", " ").capitalize())
     if not title:
         entry.head += f"<title>{entry.title}</title>"
+    if entry.section.kind == "doc":  # "Page · Site" in the browser's tab
+        entry.head = re.sub(r"<title>(.*?)</title>", lambda m: f"<title>{m.group(1)} · {html.escape(config.title)}</title>", entry.head, count=1)
     description = re.search(r'<meta name="description" content="(.*?)">', entry.head)
     entry.description = description.group(1) if description else ""
     entry.widgets = 'class="wgw"' in entry.body
-    for attr, path in re.findall(r'data-(src|widget)="([^"]+)"', entry.body):
-        if not path.startswith(("http:", "https:", "/")) and not (target / path).exists():
-            entry.warnings.append(f"the widget's {path} isn't published: is it beside the page, and not excluded?")
+    entry.published = [(attr, path) for attr, path in re.findall(r'data-(src|widget)="([^"]+)"', entry.body)
+                        if not path.startswith(("http:", "https:", "//"))]
     if entry.section.kind == "post":
         override = config.dates.get(entry.slug)
         entry.date = (datetime.datetime.fromisoformat(str(override)).astimezone() if override
@@ -165,12 +210,21 @@ def compile_entry(entry, config, out, now):
         entry.minutes = minutes_to_read(entry.body)
 
 
+def theme_folders(config):
+    """The theme, and base under it: a built-in theme by name, or a folder in the site."""
+    named = THEMES / config.theme
+    theme = named if config.theme != "base" and named.is_dir() else config.root / config.theme
+    if not theme.is_dir():
+        built_in = ", ".join(sorted(p.name for p in THEMES.iterdir() if p.is_dir() and p.name != "base"))
+        raise BuildError(f"tdg.toml: theme: no theme {config.theme!r}; tdg has {built_in}, or give a folder")
+    return [theme, THEMES / "base"]
+
+
 def templates(config):
-    """The site's own templates first, then tdg's."""
-    loaders = [jinja2.FileSystemLoader(config.root / config.templates)] if (config.root / config.templates).is_dir() else []
-    env = jinja2.Environment(loader=jinja2.ChoiceLoader(loaders + [jinja2.FileSystemLoader(THEME / "templates")]),
-                             autoescape=True, trim_blocks=True, lstrip_blocks=True, keep_trailing_newline=False)
-    return env
+    """The site's own templates first, then its theme's, then base's."""
+    folders = [config.root / config.templates] + [t / "templates" for t in theme_folders(config)]
+    loader = jinja2.ChoiceLoader([jinja2.FileSystemLoader(f) for f in folders if f.is_dir()])
+    return jinja2.Environment(loader=loader, autoescape=True, trim_blocks=True, lstrip_blocks=True)
 
 
 def link(root):
@@ -197,6 +251,16 @@ def feed(config, posts):
             f"{items}</feed>")
 
 
+def index_search(out):
+    """A Pagefind index of the site, for the search box (pip install 'pagefind[bin]')."""
+    import sys
+    result = subprocess.run([sys.executable, "-m", "pagefind", "--site", str(out), "--silent"],
+                            capture_output=True, text=True)
+    if result.returncode != 0:
+        raise BuildError("search: Pagefind failed (is it installed? pip install 'pagefind[bin]'):\n"
+                         + (result.stderr or result.stdout).strip())
+
+
 def build(config: Config, out=None, dev=False):
     """Build the site into out (by default, the config's); returns what was built."""
     started = time.monotonic()
@@ -209,7 +273,17 @@ def build(config: Config, out=None, dev=False):
 
     with ThreadPoolExecutor(max_workers=os.cpu_count() or 4) as pool:
         now = datetime.datetime.now().astimezone()
-        for future in [pool.submit(compile_entry, e, config, out, now) for e in entries]:
+        inputs = {}
+        if config.api.get("python"):
+            python = config.api["python"]
+            try:
+                records = api.python([config.root / p for p in python.get("paths", ["."])], python["modules"],
+                                     page=config.api.get("page", ""))
+            except Exception as e:
+                raise BuildError(f"tdg.toml: api: {e}") from None
+            import json
+            inputs["tdg-api"] = json.dumps(records, separators=(",", ":"))
+        for future in [pool.submit(compile_entry, e, config, out, now, inputs) for e in entries]:
             try:
                 future.result()
             except typst.TypstError as e:
@@ -217,16 +291,27 @@ def build(config: Config, out=None, dev=False):
 
     assets = out / "_tdg"
     assets.mkdir()
-    if config.default_style:
-        for name in ("style.css", "theme.js"):
-            shutil.copy(THEME / name, assets / name)
+    if config.default_style:  # base's static files, then the theme's over them
+        for theme in reversed(theme_folders(config)):
+            if (theme / "static").is_dir():
+                shutil.copytree(theme / "static", assets, dirs_exist_ok=True)
     if any(e.widgets for e in entries):
-        shutil.copytree(WGW, assets / "wgw", ignore=shutil.ignore_patterns("__pycache__"))
-    for folder in config.copy:
-        source = config.root / folder
+        wgw = config.root / config.wgw if config.wgw else WGW
+        if not (wgw / "wgw.js").exists():
+            raise BuildError(f"tdg.toml: wgw: no wgw build (wgw.js) in {wgw}")
+        shutil.copytree(wgw, assets / "wgw", ignore=shutil.ignore_patterns("__pycache__"))
+    for published, source in copies(config).items():
         if not source.exists():
-            raise BuildError(f"tdg.toml: copy: no such folder {folder}")
-        shutil.copytree(source, out / folder, ignore=publishable(config), dirs_exist_ok=True)
+            raise BuildError(f"tdg.toml: copy: no such file or folder {source}")
+        if source.is_dir():
+            shutil.copytree(source, out / published, ignore=publishable(config), dirs_exist_ok=True)
+        else:
+            (out / published).parent.mkdir(parents=True, exist_ok=True)
+            shutil.copy(source, out / published)
+    for entry in entries:  # a widget's files must be on the site
+        for attr, path in entry.published:
+            if not (out / entry.url / path).resolve().exists():
+                entry.warnings.append(f"the figure's {path} isn't on the site: is it beside the page, copied, and not excluded?")
     if dev:
         (assets / "build-id").write_text(str(time.time()))
 
@@ -234,13 +319,18 @@ def build(config: Config, out=None, dev=False):
     env = templates(config)
     common = {"site": config, "year": datetime.date.today().year, "feed": bool(config.url and posts), "dev": dev}
     for entry in entries:
+        docs = [e for e in entries if e.section is entry.section] if entry.section.kind == "doc" else []
+        at = docs.index(entry) if docs else 0
         page = env.get_template(f"{entry.section.kind}.html").render(
             **common, entry=entry, root=entry.root, link=link(entry.root),
-            head=Markup(entry.head), body=Markup(entry.body))
+            head=Markup(entry.head), body=Markup(entry.body), toc=entry.toc, docs=docs,
+            prev=docs[at - 1] if docs and at > 0 else None, next=docs[at + 1] if docs and at + 1 < len(docs) else None)
         (out / entry.url / "index.html").write_text(page)
     if posts:
         home = env.get_template("home.html").render(**common, entry=None, root="./", link=link("./"), posts=posts)
         (out / "index.html").write_text(home)
     if common["feed"]:
         (out / "feed.xml").write_text(feed(config, posts))
+    if config.search:
+        index_search(out)
     return Result(entries=entries, seconds=time.monotonic() - started)

@@ -33,7 +33,8 @@ def main(argv=None):
             for path in typst.install():
                 print("Installed", path)
     except (ConfigError, BuildError, typst.TypstError) as e:
-        print("error:", e, file=sys.stderr)
+        message = str(e)
+        print(message if message.startswith("error") else f"error: {message}", file=sys.stderr)
         sys.exit(1)
     except KeyboardInterrupt:
         pass

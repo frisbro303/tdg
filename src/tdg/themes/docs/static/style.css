@@ -1,0 +1,108 @@
+/* tdg's docs theme: for software documentation. Sans-serif, a full-width header, and room for code. */
+:root {
+  color-scheme: light;
+  --outer: #ffffff;
+  --bg: #ffffff;
+  --text: #1f2328;
+  --muted: #656d76;
+  --line: #e5e7eb;
+  --panel: #f6f8fa;
+  --link: #0969da;
+  --accent: #bc4c00;
+  --surface: #d8dee4;
+  --red: #cf222e;
+  --sans: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  --width: 760px;
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --outer: #0d1117;
+  --bg: #0d1117;
+  --text: #e6edf3;
+  --muted: #8d96a0;
+  --line: #262c36;
+  --panel: #161b22;
+  --link: #4493f8;
+  --accent: #db6d28;
+  --surface: #30363d;
+  --red: #f85149;
+}
+
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body { margin: 0; background: var(--bg); color: var(--text); font: 16px/1.65 var(--sans); -webkit-font-smoothing: antialiased; }
+.page { min-height: 100vh; display: flex; flex-direction: column; }
+main { flex: 1; width: 100%; max-width: 1280px; margin: 0 auto; padding: 32px 28px 16px; }
+a { color: var(--link); text-decoration: none; }
+a:hover { text-decoration: underline; text-underline-offset: 3px; }
+::selection { background: color-mix(in srgb, var(--link) 22%, transparent); }
+:focus-visible { outline: 2px solid var(--link); outline-offset: 2px; }
+
+/* Header and footer */
+.site-header { position: sticky; top: 0; z-index: 10; display: flex; align-items: center; gap: 20px; padding: 12px 28px; background: color-mix(in srgb, var(--bg) 88%, transparent); backdrop-filter: blur(8px); border-bottom: 1px solid var(--line); }
+.logo { display: flex; align-items: center; gap: 10px; color: var(--text); font-weight: 650; font-size: 17px; text-decoration: none; }
+.logo img { width: 24px; height: 24px; order: -1; }
+.logo:hover { text-decoration: none; }
+.site-nav { display: flex; gap: 18px; margin-left: auto; font-size: 14px; }
+.site-nav a { color: var(--muted); }
+.site-nav a:hover { color: var(--text); text-decoration: none; }
+#theme-toggle { display: grid; place-items: center; width: 32px; height: 32px; padding: 0; border: 1px solid var(--line); border-radius: 6px; background: none; color: var(--muted); cursor: pointer; }
+#theme-toggle:hover { color: var(--text); }
+#theme-toggle svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; }
+#theme-toggle .sun, [data-theme="dark"] #theme-toggle .moon { display: none; }
+[data-theme="dark"] #theme-toggle .sun { display: block; }
+.site-footer { display: flex; justify-content: space-between; gap: 16px; padding: 20px 28px; border-top: 1px solid var(--line); color: var(--muted); font-size: 13px; }
+.contact { display: flex; gap: 14px; }
+.site-footer a { color: var(--muted); }
+.site-footer a:hover { color: var(--text); }
+
+/* Text */
+h1, h2, h3, h4 { line-height: 1.25; font-weight: 650; letter-spacing: -0.01em; }
+h1 { font-size: 32px; margin: 0.2em 0 0.6em; }
+h2 { font-size: 23px; margin: 2em 0 0.6em; padding-bottom: 0.3em; border-bottom: 1px solid var(--line); }
+h3 { font-size: 18px; margin: 1.6em 0 0.5em; }
+h2, h3, h4 { scroll-margin-top: 72px; }
+p, ul, ol, table { margin: 0 0 1em; }
+li + li { margin-top: 0.2em; }
+code { font: 0.86em var(--mono); background: var(--panel); border: 1px solid var(--line); border-radius: 4px; padding: 0.1em 0.35em; }
+pre { margin: 0 0 1.2em; padding: 14px 16px; overflow-x: auto; background: var(--panel); border: 1px solid var(--line); border-radius: 8px; font-size: 14px; line-height: 1.5; }
+pre code { font-size: inherit; background: none; border: 0; padding: 0; }
+[data-theme="dark"] pre code span { filter: brightness(1.7) saturate(0.8); }  /* Typst's highlighting is drawn for light pages */
+table { width: 100%; border-collapse: collapse; font-size: 15px; display: block; overflow-x: auto; }
+th, td { padding: 8px 12px; border-bottom: 1px solid var(--line); text-align: left; vertical-align: top; }
+blockquote { margin: 1em 0; padding-left: 1em; border-left: 3px solid var(--line); color: var(--muted); }
+img { max-width: 100%; height: auto; }
+figure { margin: 1.6em 0; }
+figure img { display: block; margin: 0 auto; }
+figcaption { margin-top: 8px; color: var(--muted); font-size: 14px; text-align: center; }
+math { font-size: 1.1em; }
+
+/* Components, in this theme's look */
+.thm { margin: 1.2em 0; padding: 12px 16px; border: 1px solid var(--line); border-left: 3px solid var(--link); border-radius: 6px; background: var(--panel); }
+.thm > :last-child { margin-bottom: 0; }
+.callout { border-radius: 6px; }
+.source-name { font-size: 12px; }
+.source-code pre { border-top-left-radius: 0; }
+.api-name { font-size: 17px !important; }
+h3.api-name { border-top: 0; padding-top: 0; margin-top: 2.2em; }
+.api-name code { background: none; border: 0; padding: 0; font-size: 1em; }
+.api > pre { font-size: 13.5px; }
+.api-section dt code { background: none; border: 0; padding: 0; color: var(--text); }
+.wgw { --wgw-colors: var(--surface), var(--red); --wgw-accent: var(--text); --wgw-control: var(--muted); --wgw-edge: color-mix(in srgb, var(--text) 12%, transparent); }
+.wgw-controls { font-family: var(--mono); color: var(--muted); }
+
+/* Posts and pages in this theme too */
+.post-header h1 { margin-bottom: 0.2em; }
+.meta { color: var(--muted); font-size: 14px; margin-bottom: 2em; }
+body:not(.docs) main { max-width: calc(var(--width) + 56px); }
+.row { display: grid; grid-template-columns: 110px 1fr; gap: 16px; padding: 14px 0; border-bottom: 1px solid var(--line); color: var(--text); }
+.row:hover { text-decoration: none; }
+.row h3 { margin: 0; }
+.row p { margin: 4px 0 0; color: var(--muted); }
+.row time { color: var(--muted); font-size: 14px; padding-top: 2px; }
+
+@media (max-width: 760px) {
+  main, .site-header, .site-footer { padding-left: 16px; padding-right: 16px; }
+  h1 { font-size: 27px; }
+}
