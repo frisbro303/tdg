@@ -1,0 +1,243 @@
+/* Colors from Flexoki by Steph Ango: https://stephango.com/flexoki */
+:root {
+  color-scheme: light;
+  --outer: #f2f0e5;
+  --bg: #fffcf0;
+  --text: #100f0f;
+  --muted: #6f6e69;
+  --line: #e6e4d9;
+  --panel: #f2f0e5;
+  --link: #205ea6;
+  --accent: #bc5215;
+  --surface: #dad8ce;
+  --red: #af3029;
+  --mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  --width: 680px;
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --outer: #100f0f;
+  --bg: #1c1b1a;
+  --text: #cecdc3;
+  --muted: #878580;
+  --line: #343331;
+  --panel: #282726;
+  --link: #4385be;
+  --accent: #da702c;
+  --surface: #403e3c;
+  --red: #d14d41;
+}
+
+* { box-sizing: border-box; }
+
+html { -webkit-text-size-adjust: 100%; }
+
+body {
+  margin: 0;
+  background: var(--outer);
+  color: var(--text);
+  font: 19px/1.55 "Libertinus Serif", "Linux Libertine", Georgia, serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.page {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: calc(var(--width) + 96px);
+  min-height: 100vh;
+  margin: 0 auto;
+  padding: 0 24px;
+  background: var(--bg);
+}
+
+::selection { background: var(--line); }
+:focus-visible { outline: 1px solid var(--muted); outline-offset: 2px; }
+
+a { color: inherit; text-decoration: underline; text-decoration-color: var(--muted); text-decoration-thickness: 1px; text-underline-offset: 3px; transition: text-decoration-color 0.15s, color 0.15s; }
+a:hover { color: var(--link); text-decoration-color: var(--link); }
+
+h1, h2, h3, h4, h5, h6 { font-size: inherit; font-weight: 600; line-height: 1.3; }
+
+/* Site chrome: the only monospaced text outside of code. */
+
+.site-header, main, .site-footer { width: 100%; padding-left: 24px; padding-right: 24px; }
+
+/* Stays at the top of the window while the page scrolls behind it. */
+.site-header {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  border-bottom: 1px solid var(--line);
+  background: var(--bg);
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  padding-top: 10px;
+  padding-bottom: 10px;
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: inherit;
+  font: 29px/1.2 "Libertinus Serif", "Linux Libertine", Georgia, serif;
+  text-decoration: none;
+}
+
+.logo:hover span { text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 3px; }
+.logo img { display: block; width: 42px; height: 42px; }
+
+.site-nav { display: flex; gap: 18px; margin-left: auto; font-size: 20px; white-space: nowrap; }
+.contact { margin-top: 2px; color: var(--muted); font-size: 15px; }
+.contact a + a { margin-left: 0.7em; }
+.contact a + a::before { content: "·"; display: inline-block; margin-right: 0.7em; }
+.site-nav a, .site-footer a { color: inherit; text-decoration: none; }
+.site-nav a:hover, .site-footer a:hover { text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 3px; }
+
+#theme-toggle {
+  display: flex;
+  padding: 2px;
+  border: 0;
+  background: none;
+  color: var(--muted);
+  cursor: pointer;
+}
+
+#theme-toggle svg {
+  flex: none;
+  width: 15px;
+  height: 15px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+#theme-toggle:hover { color: var(--text); }
+#theme-toggle .sun, [data-theme="dark"] #theme-toggle .moon { display: none; }
+[data-theme="dark"] #theme-toggle .sun { display: block; }
+
+main { padding-top: 24px; padding-bottom: 40px; }
+
+/* Sits at the end of the page, and at the bottom of the window on short pages. */
+.site-footer {
+  margin-top: auto;
+  padding-top: 14px;
+  padding-bottom: 16px;
+  border-top: 1px solid var(--line);
+  font-size: 17px;
+  line-height: 1.4;
+  text-align: center;
+}
+
+.meta { color: var(--muted); font: 12px/1.6 var(--mono); }
+
+/* Front page */
+
+.home main { padding-top: 28px; }
+.home h2 { margin: 0 0 6px; font-weight: 400; color: var(--muted); }
+
+.row {
+  display: grid;
+  grid-template-columns: 94px 1fr;
+  gap: 16px;
+  align-items: baseline;
+  padding: 6px 0;
+  color: inherit;
+  text-decoration: none;
+}
+
+.row time { color: var(--muted); font: 12px var(--mono); }
+.row h3 { margin: 0; font-weight: 400; }
+.row:hover h3 { text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 2px; }
+.row p { margin: 0; color: var(--muted); font-size: 17px; }
+
+/* Posts and pages */
+
+.post-header { margin: 12px 0 28px; }
+.post-header h1 { margin: 0 0 4px; font-size: 34px; font-weight: 500; }
+article h1 { margin: 36px 0 20px; font-size: 26px; font-weight: 400; text-align: center; }
+
+article { overflow-wrap: break-word; }
+article h2 { clear: both; margin: 40px 0 12px; font-size: 26px; font-weight: 500; }
+article h3 { margin: 28px 0 8px; font-size: 21px; font-weight: 500; }
+article h4, article h5, article h6 { margin: 20px 0 6px; }
+article p, article ul, article ol, article blockquote { margin: 0 0 12px; }
+article ul, article ol { padding-left: 22px; }
+article ul ul, article ol ol { margin: 2px 0 6px; }
+article li { margin-bottom: 2px; }
+article li > p { margin: 0 0 2px; }
+article blockquote { padding-left: 16px; border-left: 1px solid var(--line); color: var(--muted); }
+article hr { margin: 28px 0; border: 0; border-top: 1px solid var(--line); }
+article strong { font-weight: 600; }
+
+article img, article svg { max-width: 100%; height: auto; }
+figure { margin: 24px 0; }
+figure img, figure svg { display: block; margin: 0 auto; }
+.wgw { --wgw-colors: var(--surface), var(--red); --wgw-accent: var(--text); --wgw-edge: rgba(16, 15, 15, 0.1); --wgw-height: 420px; }
+[data-theme="dark"] .wgw { --wgw-edge: rgba(255, 252, 240, 0.08); }
+.wgw-controls { color: var(--muted); font-family: var(--mono); --wgw-control: var(--text); }
+figcaption { margin-top: 6px; color: var(--muted); font-size: 16px; text-align: center; }
+
+/* Plots and transparent images are drawn for a light page. */
+[data-theme="dark"] article img, [data-theme="dark"] article svg { background: #fff; }
+[data-theme="dark"] article svg { padding: 8px; }
+
+/* Figures rendered for both themes: show the one that matches. */
+article img.dark-only, [data-theme="dark"] article img.light-only { display: none; }
+[data-theme="dark"] article img.dark-only { display: block; background: none; }
+
+/* Typst diagrams: centered, drawn in the text color on the page's own background. */
+article .diagram { margin: 16px 0; }
+article .diagram svg, [data-theme="dark"] article .diagram svg { margin: 0 auto; background: none; padding: 0; }
+.diagram [stroke="#000000"] { stroke: currentColor; }
+.diagram [fill="#000000"] { fill: currentColor; }
+
+.thm { margin: 20px 0; padding: 10px 14px; border-left: 3px solid var(--muted); background: var(--panel); }
+.thm-lemma { border-left-color: var(--link); }
+.thm-theorem { border-left-color: var(--accent); }
+.thm > :last-child { margin-bottom: 0; }
+
+math[display="block"] { margin: 16px 0; overflow-x: auto; }
+.narrow-only { display: none; }
+
+code { padding: 1px 3px; background: var(--panel); font: 0.78em var(--mono); }
+
+pre {
+  margin: 0 0 14px;
+  padding: 12px 14px;
+  overflow-x: auto;
+  background: #f2f0e5;
+  font-size: 18px;
+  line-height: 1.5;
+}
+
+pre code { padding: 0; background: none; color: #100f0f; }
+
+/* Typst hard-codes syntax colors for light backgrounds; this flips lightness but keeps hue. */
+[data-theme="dark"] pre { background: #e2e6ec; filter: invert(0.88) hue-rotate(180deg); }
+
+table { display: block; max-width: 100%; margin: 16px 0; overflow-x: auto; border-collapse: collapse; }
+th, td { padding: 3px 16px 3px 0; border-bottom: 1px solid var(--line); text-align: left; }
+
+@media (max-width: 600px) {
+  body { font-size: 18px; }
+  .page { padding: 0; }
+  .site-header, main, .site-footer { padding-left: 16px; padding-right: 16px; }
+  .site-header { gap: 12px; }
+  .logo { font-size: 23px; gap: 6px; white-space: nowrap; }
+  .logo img { width: 30px; height: 30px; }
+  .site-nav { gap: 12px; font-size: 17px; }
+  .row { grid-template-columns: 1fr; gap: 0; }
+  .wide-only { display: none; }
+  .narrow-only { display: block; }
+}
+
+@media (max-width: 350px) {
+  .logo img { display: none; }
+}

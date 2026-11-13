@@ -1,0 +1,7 @@
+[package]
+name = "tdg"
+version = "0.1.0"
+entrypoint = "lib.typ"
+authors = ["Felix Granum"]
+license = "MIT"
+description = "Functions for pages of sites built by tdg: interactive 3D widgets, theorems, themed images, callouts."
