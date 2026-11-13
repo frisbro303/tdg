@@ -1,5 +1,8 @@
 // Helpers shared by the rest of tdg.
 
+/// tdg's plugin (plugin/): Python modules' API, and stills of wgw figures.
+#let tdg-plugin = plugin("../assets/tdg.wasm")
+
 /// Whether this content is laid out as HTML (a web page), rather than paged (a PDF).
 #let html-target() = target() == "html"
 

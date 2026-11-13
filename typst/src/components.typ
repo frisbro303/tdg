@@ -5,35 +5,28 @@
 
 // ---- Widgets: interactive 3D figures, run by wgw (bundled with tdg).
 
-/// An interactive 3D figure: a mesh, a widget that builds or drives it, or both. In HTML it's a live figure; in a
-/// PDF, its `still`.
+/// An interactive 3D figure, from its `.wgw` file: a widget (a small WebAssembly module, written in Rust with
+/// wgw-widget, holding any data it needs), or a mesh (a `.wgw` file of arrays, or an `.obj`). In HTML it's live; in
+/// a PDF it's what the page first shows: the widget runs (as a Typst plugin) and its first frame is drawn by wgw's
+/// own renderer, with the page's shaders, on the CPU in tdg's plugin.
 ///
-/// - widget (path, str, none): A widget, `.py` or `.js`: `path("torus_widget.py")`, which tdg publishes, or a URL.
-///   A widget is a function `widget(mesh)` returning a `Widget` (see wgw's docs).
-/// - src (path, str, none): A mesh, `.obj` or `.wgw`, drawn at once, then given to the widget.
-/// - data (array): Files the widget reads, such as `(path("spectrum.npz"),)`, published beside it.
-/// - still (content, none): What a PDF shows instead, such as `image("torus.png")`. Without one, a PDF shows a note.
+/// - src (path, str): The figure's file: `path("distance.wgw")`, which tdg publishes, or a URL (not drawn in PDFs).
 /// - caption (content, none): The figure's caption; widgets are numbered with the other figures.
 /// - up (str): The axis that points up: "x", "y" or "z".
-/// - view (array, none): The starting camera, `(turn, tilt)` in degrees.
-/// - pick (str): When the widget's `on_pick` runs: "click", "hover" or "none".
-/// - flat (bool): Flat shading for the figure's mesh.
-/// - height (length, str, none): The canvas's height, such as `360pt` or "50vh".
+/// - view (array, none): The starting camera, `(turn, tilt)` in degrees, and optionally a scale: `(turn, tilt, 1.5)`
+///   shows the scene half again as large.
+/// - pick (str): When a pick reaches the widget: "click", "hover" or "none".
+/// - flat (bool): Flat shading for a mesh.
+/// - height (length, str, none): The canvas's height, such as `360pt` or "380px".
 /// - alt (str, none): A description for screen readers; by default the caption's text.
-/// - url (str, none): Where the interactive version is, for the note a PDF shows without a still.
 /// - credit (bool): A small "wgw" link in the figure's corner.
-#let widget(widget: none, src: none, data: (), still: none, caption: none, up: "z", view: none, pick: "click",
-            flat: false, height: none, alt: none, url: none, credit: true) = {
-  assert(widget != none or src != none, message: "a widget needs a widget, a src mesh, or both")
+#let widget(src, caption: none, up: "z", view: none, pick: "click", flat: false, height: none, alt: none, credit: true) = {
   assert(up in ("x", "y", "z"), message: "up is \"x\", \"y\" or \"z\", not " + repr(up))
   assert(pick in ("click", "hover", "none"), message: "pick is \"click\", \"hover\" or \"none\", not " + repr(pick))
-  // Its files are published with the site (marked inside the figure, so a label on it labels the figure).
-  let files = { publish(widget); publish(src); for file in data { publish(file) } }
-  let body = files + context if html-target() {
+  // Its file is published with the site (marked inside the figure, so a label on it labels the figure).
+  let body = publish(src) + context if html-target() {
     [#metadata(page-url.get()) <tdg-widget>]
-    let attrs = (class: "wgw")
-    if src != none { attrs.insert("data-src", file-url(src)) }
-    if widget != none { attrs.insert("data-widget", file-url(widget)) }
+    let attrs = (class: "wgw", data-src: file-url(src))
     if up != "z" { attrs.insert("data-up", up) }
     if view != none { attrs.insert("data-view", if type(view) == str { view } else { view.map(num).join(",") }) }
     if pick != "click" { attrs.insert("data-pick", pick) }
@@ -45,13 +38,32 @@
     let label = if alt != none { alt } else if caption != none { plain-text(caption) } else { none }
     if label != none { attrs.insert("data-label", label) }
     html.elem("div", attrs: attrs)
-  } else if still != none {
-    still
   } else {
-    block(width: 100%, height: 5cm, stroke: 0.5pt + luma(180), radius: 3pt,
-      align(center + horizon, text(fill: luma(110), size: 0.9em)[
-        An interactive 3D figure#if url != none [: #link(url)] else [, in the web version].
-      ]))
+    // The still: the figure as the page first shows it, at the blog column's width (680 CSS pixels), its height in
+    // CSS pixels (420 by default, as wgw's), with the site's colors from its stylesheets.
+    let site = state("tdg-site", none).get()
+    let css = if site == none { "" } else {
+      let theme = if site.theme-style { read("../assets/" + site.theme.css) } else { "" }
+      read("../assets/components.css") + theme + site.css.map(c => if type(c) == str { "" } else { read(c) }).join()
+    }
+    let px = if type(height) == length { height.pt() * 4 / 3 }
+      else if type(height) == str and height.ends-with("px") { float(height.trim("px", at: end)) } else { 420 }
+    let figure = (width: 680, height: px, up: up, flat: flat, css: css, view: if type(view) == array { view.map(float) } else { none })
+    let file = if type(src) == path { read(src, encoding: none) } else { bytes(()) }
+    let empty = bytes(())
+    let png = if file.len() >= 4 and file.slice(0, 4) == bytes((0, 0x61, 0x73, 0x6d)) {
+      // A widget: its setup, then its scene with every control at its start, its starting pick, and frame 0.
+      let w = plugin(file)
+      let setup = w.setup(empty)
+      let info = json(setup)
+      let controls = info.controls.pairs().map(((name, c)) => (name, if type(c) == array { c.at(2) } else { c })).to-dict()
+      let picks = if info.picked != none { ((vertex: info.picked, layer: "mesh", point: none, frame: 0),) } else { () }
+      let scene = w.scene(empty, bytes(json.encode((controls: controls, picks: picks, frame: 0))))
+      tdg-plugin.still(bytes(json.encode(figure)), empty, setup, scene)
+    } else {
+      tdg-plugin.still(bytes(json.encode(figure)), file, empty, empty)
+    }
+    image(png, format: "png", width: 100%, alt: if alt != none { alt } else if caption != none { plain-text(caption) })
   }
   figure(body, caption: caption, kind: image)  // numbered with the other figures
 }

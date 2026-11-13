@@ -59,11 +59,11 @@ body.docs .page { max-width: 1240px; }
 @media (max-width: 760px) { .docs-layout { grid-template-columns: 1fr; } .docs-nav { position: static; max-height: none; } }
 
 
-/* "made with tdg", small in the footer's bottom-right corner (on phones, a line of its own). */
+/* "tdg-built website", small in the footer's bottom-right corner (on phones, a line of its own). */
 .site-footer { position: relative; }
 .site-footer .credit { position: absolute; right: 16px; bottom: 12px; margin: 0; font-size: 12px; line-height: 1; color: var(--muted); opacity: 0.75; }
 .site-footer .credit a { color: inherit; display: inline-flex; align-items: center; gap: 5px; }
-.site-footer .credit img { width: 13px; height: 13px; background: none; padding: 0; border: 0; }
+.site-footer .credit img { width: 13px; height: 13px; background: none; padding: 0; border: 0; transform: translateY(0.12em); }  /* level with the text's letters, not its line box */
 @media (max-width: 600px) { .site-footer .credit { position: static; margin-top: 8px; } }
 
 /* Search, in the docs' sidebar. */

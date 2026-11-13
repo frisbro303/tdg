@@ -85,7 +85,6 @@ export class Viewer {
         wasm.__wbg_viewer_free(ptr, 0);
     }
     /**
-     * Back to the defaults for every parameter of a layer, before it's given its new ones.
      * @param {string} layer
      */
     clear_params(layer) {
@@ -94,8 +93,13 @@ export class Viewer {
         wasm.viewer_clear_params(this.__wbg_ptr, ptr0, len0);
     }
     /**
-     * Advance the glide and the animation, upload what changed, and draw into a canvas of width by height device
-     * pixels. Returns whether something is still moving, so the page asks for another frame.
+     * @returns {number}
+     */
+    current_frame() {
+        const ret = wasm.viewer_current_frame(this.__wbg_ptr);
+        return ret >>> 0;
+    }
+    /**
      * @param {number} now
      * @param {number} width
      * @param {number} height
@@ -142,8 +146,6 @@ export class Viewer {
         return this;
     }
     /**
-     * What's under a point (CSS pixels from the canvas's top left): [layer index, element index, x, y, z], or
-     * nothing. The element is a vertex for meshes, points and curves, and a vector's index for vector fields.
      * @param {number} x
      * @param {number} y
      * @returns {Float64Array | undefined}
@@ -158,7 +160,6 @@ export class Viewer {
         return v1;
     }
     /**
-     * Play the scene's frames from now at fps, once or looping; not animated, jump to the last frame.
      * @param {number} now
      * @param {number} fps
      * @param {boolean} looped
@@ -177,7 +178,6 @@ export class Viewer {
         wasm.viewer_pointer_down(this.__wbg_ptr, id, x, y, now);
     }
     /**
-     * Returns whether the view changed (a drag turned it or a pinch zoomed it).
      * @param {number} id
      * @param {number} x
      * @param {number} y
@@ -189,7 +189,6 @@ export class Viewer {
         return ret !== 0;
     }
     /**
-     * Returns whether the press was a click (it barely moved).
      * @param {number} id
      * @param {number} now
      * @param {boolean} cancelled
@@ -229,7 +228,6 @@ export class Viewer {
         wasm.viewer_reset(this.__wbg_ptr);
     }
     /**
-     * A color parameter: one or more RGBA colors, 4 numbers in [0, 1] each.
      * @param {string} layer
      * @param {string} key
      * @param {Float32Array | number[]} rgba
@@ -281,15 +279,12 @@ export class Viewer {
         }
     }
     /**
-     * Show meshes' triangle grids (unless a layer sets its own `edges`).
      * @param {boolean} on
      */
     set_grid(on) {
         wasm.viewer_set_grid(this.__wbg_ptr, on);
     }
     /**
-     * Create a layer, or change its kind ("mesh", "points", "lines", "vectors"); "" keeps an existing layer's
-     * kind, and makes a new one points.
      * @param {string} name
      * @param {string} kind
      */
@@ -311,7 +306,6 @@ export class Viewer {
         }
     }
     /**
-     * Show a parsed mesh file as the mesh layer `name`.
      * @param {string} name
      * @param {MeshFile} file
      */
@@ -325,7 +319,6 @@ export class Viewer {
         }
     }
     /**
-     * A number parameter; booleans are 0 and 1.
      * @param {string} layer
      * @param {string} key
      * @param {number} value
@@ -346,22 +339,30 @@ export class Viewer {
         wasm.viewer_set_number(this.__wbg_ptr, ptr0, len0, ptr1, len1, val3);
     }
     /**
-     * The up axis ("x", "y", "z"), the starting view (turn and tilt, degrees), and whether to keep motion down.
      * @param {string} up
      * @param {number} yaw
      * @param {number} pitch
+     * @param {number} scale
      * @param {boolean} reduced_motion
      */
-    set_options(up, yaw, pitch, reduced_motion) {
+    set_options(up, yaw, pitch, scale, reduced_motion) {
         const val2 = +yaw;
         const val3 = +pitch;
-        const val4 = +reduced_motion;
+        const val4 = +scale;
+        const val5 = +reduced_motion;
         const ptr0 = passStringToWasm0(up, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
         const len0 = WASM_VECTOR_LEN;
-        wasm.viewer_set_options(this.__wbg_ptr, ptr0, len0, val2, val3, val4);
+        wasm.viewer_set_options(this.__wbg_ptr, ptr0, len0, val2, val3, val4, val5);
     }
     /**
-     * The page's colors, as flat RGBA: the colormap's stops, the accent for layers without values, the edge color.
+     * @param {Float32Array | number[]} widths
+     */
+    set_pane_widths(widths) {
+        const ptr0 = passArrayF32ToWasm0(widths, wasm.__wbindgen_malloc);
+        const len0 = WASM_VECTOR_LEN;
+        wasm.viewer_set_pane_widths(this.__wbg_ptr, ptr0, len0);
+    }
+    /**
      * @param {Float32Array | number[]} colormap
      * @param {Float32Array | number[]} accent
      * @param {Float32Array | number[]} edge
@@ -413,7 +414,6 @@ export class Viewer {
         }
     }
     /**
-     * Errors from layers that couldn't be drawn since the last call, one per line.
      * @returns {string}
      */
     take_errors() {
@@ -476,12 +476,6 @@ function __wbg_get_imports() {
             getDataViewMemory0().setInt32((arg0 >>> 0) + 4 * 1, len1, true);
             getDataViewMemory0().setInt32((arg0 >>> 0) + 4 * 0, ptr1, true);
         },
-        __wbg___wbindgen_number_get_934b640d0889af78: function(arg0, arg1) {
-            const obj = arg1;
-            const ret = typeof(obj) === 'number' ? obj : undefined;
-            getDataViewMemory0().setFloat64((arg0 >>> 0) + 8 * 1, isLikeNone(ret) ? 0 : ret, true);
-            getDataViewMemory0().setInt32((arg0 >>> 0) + 4 * 0, !isLikeNone(ret), true);
-        },
         __wbg___wbindgen_string_get_7ce8eee7fd327545: function(arg0, arg1) {
             const obj = arg1;
             const ret = typeof(obj) === 'string' ? obj : undefined;
@@ -504,6 +498,9 @@ function __wbg_get_imports() {
         },
         __wbg_attachShader_817dcec9e79fd18f: function(arg0, arg1, arg2) {
             arg0.attachShader(arg1, arg2);
+        },
+        __wbg_bindBufferBase_6860496c67f7dd5a: function(arg0, arg1, arg2, arg3) {
+            arg0.bindBufferBase(arg1 >>> 0, arg2 >>> 0, arg3);
         },
         __wbg_bindBuffer_b3bb001fdbee089a: function(arg0, arg1, arg2) {
             arg0.bindBuffer(arg1 >>> 0, arg2);
@@ -544,8 +541,20 @@ function __wbg_get_imports() {
         __wbg_bufferData_2fb8740d60478bf0: function(arg0, arg1, arg2, arg3) {
             arg0.bufferData(arg1 >>> 0, arg2, arg3 >>> 0);
         },
+        __wbg_bufferData_41b591a9f2d502ad: function(arg0, arg1, arg2, arg3) {
+            arg0.bufferData(arg1 >>> 0, arg2, arg3 >>> 0);
+        },
+        __wbg_bufferData_9305dba3ba9cba4e: function(arg0, arg1, arg2, arg3) {
+            arg0.bufferData(arg1 >>> 0, arg2, arg3 >>> 0);
+        },
         __wbg_bufferData_9eb9c4c5053ac480: function(arg0, arg1, arg2, arg3) {
             arg0.bufferData(arg1 >>> 0, arg2, arg3 >>> 0);
+        },
+        __wbg_bufferSubData_8acfdcd4b9f7edeb: function(arg0, arg1, arg2, arg3) {
+            arg0.bufferSubData(arg1 >>> 0, arg2, arg3);
+        },
+        __wbg_bufferSubData_9bec93d67e98757e: function(arg0, arg1, arg2, arg3) {
+            arg0.bufferSubData(arg1 >>> 0, arg2, arg3);
         },
         __wbg_clearColor_0a9b08857907c212: function(arg0, arg1, arg2, arg3, arg4) {
             arg0.clearColor(arg1, arg2, arg3, arg4);
@@ -657,12 +666,6 @@ function __wbg_get_imports() {
         __wbg_drawArraysInstanced_762b36f2147c7a85: function(arg0, arg1, arg2, arg3, arg4) {
             arg0.drawArraysInstanced(arg1 >>> 0, arg2, arg3, arg4);
         },
-        __wbg_drawArrays_a9c18db2e94f4a82: function(arg0, arg1, arg2, arg3) {
-            arg0.drawArrays(arg1 >>> 0, arg2, arg3);
-        },
-        __wbg_drawArrays_fe5a51410bfabb5b: function(arg0, arg1, arg2, arg3) {
-            arg0.drawArrays(arg1 >>> 0, arg2, arg3);
-        },
         __wbg_drawElementsInstancedANGLE_470ce8b489eeafa5: function(arg0, arg1, arg2, arg3, arg4, arg5) {
             arg0.drawElementsInstancedANGLE(arg1 >>> 0, arg2, arg3 >>> 0, arg4, arg5);
         },
@@ -692,14 +695,6 @@ function __wbg_get_imports() {
         },
         __wbg_framebufferRenderbuffer_ffaba93222aea77c: function(arg0, arg1, arg2, arg3, arg4) {
             arg0.framebufferRenderbuffer(arg1 >>> 0, arg2 >>> 0, arg3 >>> 0, arg4);
-        },
-        __wbg_getActiveUniform_4d82b7834e1b4ef8: function(arg0, arg1, arg2) {
-            const ret = arg0.getActiveUniform(arg1, arg2 >>> 0);
-            return isLikeNone(ret) ? 0 : addToExternrefTable0(ret);
-        },
-        __wbg_getActiveUniform_7d405d07694ad340: function(arg0, arg1, arg2) {
-            const ret = arg0.getActiveUniform(arg1, arg2 >>> 0);
-            return isLikeNone(ret) ? 0 : addToExternrefTable0(ret);
         },
         __wbg_getContext_9d32151c28a36ed6: function() { return handleError(function (arg0, arg1, arg2, arg3) {
             const ret = arg0.getContext(getStringFromWasm0(arg1, arg2), arg3);
@@ -761,6 +756,10 @@ function __wbg_get_imports() {
             const ret = arg0.getSupportedExtensions();
             return isLikeNone(ret) ? 0 : addToExternrefTable0(ret);
         },
+        __wbg_getUniformBlockIndex_0742ae35f926850a: function(arg0, arg1, arg2, arg3) {
+            const ret = arg0.getUniformBlockIndex(arg1, getStringFromWasm0(arg2, arg3));
+            return ret;
+        },
         __wbg_getUniformLocation_6352e0669c8f5393: function(arg0, arg1, arg2, arg3) {
             const ret = arg0.getUniformLocation(arg1, getStringFromWasm0(arg2, arg3));
             return isLikeNone(ret) ? 0 : addToExternrefTable0(ret);
@@ -792,13 +791,6 @@ function __wbg_get_imports() {
         },
         __wbg_linkProgram_dee7cda98bacb12f: function(arg0, arg1) {
             arg0.linkProgram(arg1);
-        },
-        __wbg_name_52bccd784c3d27a8: function(arg0, arg1) {
-            const ret = arg1.name;
-            const ptr1 = passStringToWasm0(ret, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
-            const len1 = WASM_VECTOR_LEN;
-            getDataViewMemory0().setInt32((arg0 >>> 0) + 4 * 1, len1, true);
-            getDataViewMemory0().setInt32((arg0 >>> 0) + 4 * 0, ptr1, true);
         },
         __wbg_new_cd4348290afae586: function() {
             const ret = new Object();
@@ -841,10 +833,6 @@ function __wbg_get_imports() {
         __wbg_shaderSource_c4c06a3cbc2e7bf3: function(arg0, arg1, arg2, arg3) {
             arg0.shaderSource(arg1, getStringFromWasm0(arg2, arg3));
         },
-        __wbg_size_772812b17f38f9bf: function(arg0) {
-            const ret = arg0.size;
-            return ret;
-        },
         __wbg_texImage2D_20b5002326193fe6: function() { return handleError(function (arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9) {
             arg0.texImage2D(arg1 >>> 0, arg2, arg3, arg4, arg5, arg6, arg7 >>> 0, arg8 >>> 0, arg9);
         }, arguments); },
@@ -860,42 +848,14 @@ function __wbg_get_imports() {
         __wbg_texParameteri_e24e4fdc17153838: function(arg0, arg1, arg2, arg3) {
             arg0.texParameteri(arg1 >>> 0, arg2 >>> 0, arg3);
         },
-        __wbg_type_9c887dd8c3d0ba23: function(arg0) {
-            const ret = arg0.type;
-            return ret;
-        },
-        __wbg_uniform1f_0b36dc15cb2b4991: function(arg0, arg1, arg2) {
-            arg0.uniform1f(arg1, arg2);
-        },
-        __wbg_uniform1f_fe417acc7c7a1dc5: function(arg0, arg1, arg2) {
-            arg0.uniform1f(arg1, arg2);
-        },
         __wbg_uniform1i_385ebc488d4d763f: function(arg0, arg1, arg2) {
             arg0.uniform1i(arg1, arg2);
         },
         __wbg_uniform1i_778a02a48ecdceed: function(arg0, arg1, arg2) {
             arg0.uniform1i(arg1, arg2);
         },
-        __wbg_uniform1ui_79071fccd0396b88: function(arg0, arg1, arg2) {
-            arg0.uniform1ui(arg1, arg2 >>> 0);
-        },
-        __wbg_uniform2f_6bd82d6e7f81060b: function(arg0, arg1, arg2, arg3) {
-            arg0.uniform2f(arg1, arg2, arg3);
-        },
-        __wbg_uniform2f_7e4c627c4106dd3f: function(arg0, arg1, arg2, arg3) {
-            arg0.uniform2f(arg1, arg2, arg3);
-        },
-        __wbg_uniform4f_14a3638afe93aa8f: function(arg0, arg1, arg2, arg3, arg4, arg5) {
-            arg0.uniform4f(arg1, arg2, arg3, arg4, arg5);
-        },
-        __wbg_uniform4f_5c31fb6dab645ad8: function(arg0, arg1, arg2, arg3, arg4, arg5) {
-            arg0.uniform4f(arg1, arg2, arg3, arg4, arg5);
-        },
-        __wbg_uniformMatrix4fv_cd0ba72d1d780759: function(arg0, arg1, arg2, arg3, arg4) {
-            arg0.uniformMatrix4fv(arg1, arg2 !== 0, getArrayF32FromWasm0(arg3, arg4));
-        },
-        __wbg_uniformMatrix4fv_edd2b51dbb1caffd: function(arg0, arg1, arg2, arg3, arg4) {
-            arg0.uniformMatrix4fv(arg1, arg2 !== 0, getArrayF32FromWasm0(arg3, arg4));
+        __wbg_uniformBlockBinding_61c5a97721e0f36b: function(arg0, arg1, arg2, arg3) {
+            arg0.uniformBlockBinding(arg1, arg2 >>> 0, arg3 >>> 0);
         },
         __wbg_useProgram_d9c24a7d8632c4c1: function(arg0, arg1) {
             arg0.useProgram(arg1);

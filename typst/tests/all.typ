@@ -9,9 +9,8 @@
 #let conjecture = theorem-kind("conjecture", "Conjecture")
 #conjecture[It holds.]
 
-#widget(widget: "x_widget.py", src: "m.obj", up: "y", view: (90, 10), pick: "hover", flat: true, height: 300pt,
-        caption: [A widget with no still.])
-#widget(src: "m.obj", still: rect(width: 3cm, height: 2cm, fill: luma(200)), caption: [A widget with a still.])
+#widget("m.wgw", up: "y", view: (90, 10), pick: "hover", flat: true, height: 300pt,
+        caption: [A figure from a URL: an empty figure in a PDF.])
 
 #callout(kind: "tip", title: [Hint])[Use it.]
 #callout[A plain note.]
@@ -20,6 +19,6 @@
 #themed-image("chart.gif", "chart-dark.gif", [A chart.])
 #themed-image("chart.png", "chart-dark.png", "Alt only.")
 // Negative angles must reach HTML as ASCII minus signs, which JavaScript can read.
-#widget(src: "m.obj", view: (-50, 25))
+#widget("m.obj", view: (-50, 25))
 // Captions with math still give plain alt text.
-#widget(src: "m.obj", caption: [Curvature $K = cos v \/ (r (R + r cos v))$ on a torus.])
+#widget("m.obj", caption: [Curvature $K = cos v \/ (r (R + r cos v))$ on a torus.])

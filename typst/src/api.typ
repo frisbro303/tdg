@@ -3,7 +3,7 @@
 #import "util.typ": *
 #import "components.typ": callout
 
-#let _plugin = plugin("../assets/tdg.wasm")
+#let _plugin = tdg-plugin
 
 /// A Python module's API: `#let wgw = python-api(read("/python/wgw.py"), module: "wgw")`, then `#api(wgw, "wgw.Widget")`.
 /// Typst plugins can't read files, so the page reads the source. `page` is the page that documents the module

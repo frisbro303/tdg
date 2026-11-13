@@ -2,7 +2,7 @@
 name = "tdg-plugin"
 version = "0.2.0"
 edition = "2021"
-description = "tdg's Typst plugin: Python modules' API, from their source and Google-style docstrings."
+description = "tdg's Typst plugin: Python modules' API from their source and docstrings, and stills of wgw figures for PDFs."
 publish = false
 
 [lib]
@@ -13,6 +13,8 @@ wasm-minimal-protocol = "0.1"
 rustpython-parser = "0.3"
 serde_json = "1"
 regex-lite = "0.1"
+# Stills of wgw figures: a figure's scene drawn by wgw's renderer on the CPU, with the page's shaders.
+wgw-still = { git = "https://github.com/frisbro303/wgw" }
 
 [profile.release]
 opt-level = "s"

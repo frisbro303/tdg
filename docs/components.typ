@@ -7,27 +7,26 @@ page and a printable document.
 = Widgets
 
 `widget(...)` makes an interactive 3D figure, run by #link("https://github.com/frisbro303/wgw")[wgw], which tdg
-bundles: a mesh, a widget (a short Python or JavaScript program) that builds or drives it, or both.
+bundles, from its `.wgw` file: a widget (a small WebAssembly module, written in Rust, with its data inside;
+#link("https://frisbro303.github.io/wgw/widgets/")[writing widgets]), or a mesh (or an `.obj`). In a PDF it's the
+figure's first frame: tdg runs the widget as a plugin, and wgw's own renderer draws it, with the page's shaders.
 
-#widget(widget: path("examples/torus_widget.py"), view: (-60, 35), caption: [A torus.])
+#widget(path("examples/torus.wgw"), view: (-60, 35), caption: [A torus.])
 
 ```typ
-#widget(widget: path("examples/torus_widget.py"), view: (-60, 35), caption: [A torus.])
+#widget(path("examples/torus.wgw"), view: (-60, 35), caption: [A torus.])
 ```
 
 #table(
   columns: 2,
   [*argument*], [],
-  [`widget`], [a widget, `.py` or `.js` (#link("https://frisbro303.github.io/wgw/widgets/")[writing widgets]), as a path],
-  [`src`], [a mesh, `.obj` or `.wgw`, as a path],
-  [`data`], [files the widget reads, as paths, published beside it],
-  [`still`], [what a PDF shows instead, such as `image("torus.png")`],
+  [`src`], [the figure's file, first and unnamed: a `.wgw` widget or mesh, or an `.obj`, as a path (a URL string isn't drawn in PDFs)],
   [`caption`], [its caption; widgets are numbered with the other figures],
   [`up`], [the axis that points up: `"x"`, `"y"` or `"z"` (the default)],
-  [`view`], [the starting camera, `(turn, tilt)` in degrees],
-  [`pick`], [when the widget's `on_pick` runs: `"click"` (the default), `"hover"` or `"none"`],
+  [`view`], [the starting camera, `(turn, tilt)` in degrees, and optionally a scale: `(turn, tilt, 1.5)`],
+  [`pick`], [when a pick reaches the widget: `"click"` (the default), `"hover"` or `"none"`],
   [`flat`], [flat shading],
-  [`height`], [the canvas's height, such as `360pt`],
+  [`height`], [the canvas's height, such as `360pt` or `"380px"`],
   [`alt`], [a description for screen readers; by default the caption's text],
   [`credit`], [a small "wgw" link in the corner; `false` hides it],
 )
@@ -55,7 +54,7 @@ bundles: a mesh, a widget (a short Python or JavaScript program) that builds or 
 
 = Source files
 
-`source-code(path("examples/torus_widget.py"))` shows a file under its name, read by Typst, so what's shown is
+`source-code(path("examples/plot.py"))` shows a file under its name, read by Typst, so what's shown is
 the file itself.
 
 = Two layouts, two themes

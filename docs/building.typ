@@ -20,8 +20,8 @@ python3 -m http.server -d _site      # http://localhost:8000
 = PDFs
 
 A post is also published as a PDF (`pdf: true`, the default for posts), and any page compiles to one on its own:
-`typst compile posts/hopf/main.typ`. Components lay themselves out for print: theorems as blocks, widgets as their
-`still`.
+`typst compile posts/hopf/main.typ`. Components lay themselves out for print: theorems as blocks, and widgets as
+the figure's first frame, drawn by wgw's own renderer and shaders on the CPU, in tdg's plugin.
 
 = Publishing to GitHub Pages
 

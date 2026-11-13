@@ -6,8 +6,8 @@ package, so a whole site, every page, its PDFs, its feed and its files, comes ou
 other tools. Pages have Typst's math, which browsers show as MathML, and tdg's components: numbered theorems,
 callouts, API references generated from Python docstrings, and interactive 3D figures.
 
-#widget(widget: path("examples/torus_widget.py"), view: (-60, 35), caption: [A torus colored by its Gaussian
-  curvature, $K = cos v \/ (r (R + r cos v))$, built by a Python widget. Drag it; move the sliders.])
+#widget(path("examples/torus.wgw"), view: (-60, 35), caption: [A torus colored by its Gaussian curvature,
+  $K = cos v \/ (r (R + r cos v))$, built by a widget in Rust. Drag it; move the sliders.])
 
 This site is made by tdg, from #link("https://github.com/frisbro303/tdg/tree/main/docs")[these pages].
 

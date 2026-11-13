@@ -3,5 +3,5 @@
 = A section
 Inline $x^2$, and @thm-hopf.
 #theorem(title: [Hopf])[Every map $S^3 -> S^2$ of Hopf invariant one is a fibration.] <thm-hopf>
-#widget(widget: path("torus_widget.py"), view: (-60, 35), caption: [A torus.]) <fig-torus>
+#widget(path("torus.wgw"), view: (-60, 35), caption: [A torus.]) <fig-torus>
 See @fig-torus and #link("/about/")[about].

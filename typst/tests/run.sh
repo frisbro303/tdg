@@ -10,7 +10,7 @@ for test in *.typ; do
 done
 typst compile --root .. --features html,bundle --format bundle site/site.typ "$out/site" 2>/dev/null
 typst compile --root .. --features html,bundle --format bundle --input tdg=pdf site/site.typ "$out/site" 2>/dev/null
-for file in index.html posts/hello/index.html posts/hello/hello.pdf tests/site/posts/hello/torus_widget.py about/index.html \
+for file in index.html posts/hello/index.html posts/hello/hello.pdf tests/site/posts/hello/torus.wgw about/index.html \
             about/about.pdf reference/index.html feed.xml _tdg/search.json _tdg/wgw/wgw.js; do
   [ -f "$out/site/$file" ] || { echo "missing from the site: $file"; exit 1; }
 done

@@ -28,8 +28,7 @@
 )
 
 #let _assets = ("components.css", "blog.css", "docs.css", "theme.js", "tdg.svg", "search.js")
-#let _wgw = ("wgw.js", "io.js", "patch.js", "runners.js", "style.js", "python-worker.js", "wgw.py", "logo.svg",
-  "core/wgw_core.js", "core/wgw_core_bg.wasm")
+#let _wgw = ("wgw.js", "io.js", "patch.js", "widget.js", "style.js", "logo.svg", "core/wgw_core.js", "core/wgw_core_bg.wasm")
 
 #let _escape(s) = s.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;").replace("\"", "&quot;")
 
@@ -37,7 +36,8 @@
   let base = site.url.trim("/", at: end) + "/"
   let entries = posts.map(p => {
     "<entry><title>" + _escape(p.title) + "</title><link href=\"" + base + p.url + "\"/><id>" + base + p.url + "</id>"
-    "<updated>" + p.date.display() + "T00:00:00Z</updated>"
+    "<published>" + p.date.display() + "T00:00:00Z</published>"
+    "<updated>" + (if p.updated != none { p.updated } else { p.date }).display() + "T00:00:00Z</updated>"
     if p.description != none { "<summary>" + _escape(p.description) + "</summary>" }
     "</entry>"
   }).join()
@@ -61,7 +61,7 @@
 /// - nav (array): The header's links: `(("about", "about/"), ("GitHub", "https://..."))`, from the site's root.
 /// - footer (dictionary, none): `(links: (github: "https://..."))`, and a line `(copyright: "...")` if you want one.
 /// - home (str, none): A heading above the home page's posts.
-/// - credit (bool): A small "made with tdg" link in the footer.
+/// - credit (bool): A small "tdg-built website" link in the footer.
 /// - search (bool): A search box in docs.
 /// - files (array): Other files to publish, as paths (data a widget reads, downloads, ...).
 #let site(..settings, files: (), body) = {
@@ -156,8 +156,8 @@
   }
 }
 
-// A PDF's title, and for posts their author and date.
-#let _pdf-header(title, date: none, author: none) = {
+// A PDF's title, and for posts their author, date and when they were last updated.
+#let _pdf-header(title, date: none, updated: none, author: none) = {
   align(center, block(below: 1.8em)[
     #text(1.7em, weight: "bold", title)
     #if date != none {
@@ -165,34 +165,36 @@
       v(0.2em)
       context {
         let author = _author(author)
-        let parts = (if author != none { author }, date.display("[month repr:long] [day padding:none], [year]")).filter(x => x != none)
+        let long = d => d.display("[month repr:long] [day padding:none], [year]")
+        let parts = (if author != none { author }, long(date), if updated != none [updated #long(updated)]).filter(x => x != none)
         text(0.9em, fill: luma(100), parts.join[ · ])
       }
     }
   ])
 }
 
-/// A post: dated, listed on the home page and in the feed, with a reading time and a PDF. Use as
+/// A post: dated, listed on the home page and in the feed, with a PDF. Use as
 /// `#show: post.with("hopf-fibrations", title: "...", date: "2026-11-03")` at the top of the post.
 ///
 /// - slug (str): Its URL: posts/<slug>/.
 /// - title (str): Its title.
 /// - date (datetime, str): When it was published: a datetime, or "YYYY-MM-DD".
+/// - updated (datetime, str, none): When it was last changed, shown beside its date: "(updated 2026-11-12)".
 /// - author (str, auto, none): Who wrote it; by default the site's author.
 /// - description (str, none): A line about it, for the home page and search engines.
 /// - pdf (bool): Also publish it as a PDF, posts/<slug>/<slug>.pdf, linked under its title.
 /// - pdf-page (dictionary): Page settings for its PDF, such as `(margin: 2cm)`: Typst allows `set page` only at a
 ///   document's top, which a page's content isn't.
-#let post(slug, title: none, date: none, author: auto, description: none, pdf: true, pdf-page: (:), body) = {
+#let post(slug, title: none, date: none, updated: none, author: auto, description: none, pdf: true, pdf-page: (:), body) = {
   assert(title != none, message: "a post needs a title")
   assert(date != none, message: "a post needs a date, such as date: \"2026-11-03\"")
   let date = _date(date)
+  let updated = if updated != none { _date(updated) }
   let url = "posts/" + slug + "/"
-  let words = plain-text(body).split().len()
-  let page = (kind: "post", slug: slug, url: url, title: title, date: date, description: description, pdf: pdf,
-    minutes: calc.max(1, calc.ceil(words / 200)), pdf-page: pdf-page, author: author)
-  [#metadata((url: url, title: title, date: date, description: description)) <tdg-post>]
-  _page(page, _pdf-header(title, date: date, author: author), body)
+  let page = (kind: "post", slug: slug, url: url, title: title, date: date, updated: updated, description: description,
+    pdf: pdf, pdf-page: pdf-page, author: author)
+  [#metadata((url: url, title: title, date: date, updated: updated, description: description)) <tdg-post>]
+  _page(page, _pdf-header(title, date: date, updated: updated, author: author), body)
 }
 
 /// A page that isn't a post, such as an about page or a CV: no date, no footer; it lays out its own headings. Use

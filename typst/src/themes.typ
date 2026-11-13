@@ -74,7 +74,7 @@
     }
     #if site.credit {
       html.elem("div", attrs: (class: "credit"), html.elem("a", attrs: (href: "https://github.com/frisbro303/tdg"))[
-        #html.elem("img", attrs: (src: root() + "_tdg/tdg.svg", alt: "", width: "14", height: "14")) made with tdg
+        #html.elem("img", attrs: (src: root() + "_tdg/tdg.svg", alt: "", width: "14", height: "14")) tdg-built website
       ])
     }
   ]
@@ -110,8 +110,9 @@
   #html.elem("div", attrs: (class: "meta"))[
     #if page.at("author", default: none) not in (none, auto) [#html.elem("span", attrs: (class: "author"), page.author) · ]
     #html.elem("time", attrs: (datetime: page.date.display()), page.date.display())
-    · #page.minutes min read
-    #if page.pdf [· #html.elem("a", attrs: (href: page.slug + ".pdf"), "pdf")]
+    #let updated = page.at("updated", default: none)
+    #if updated != none { [(updated ] + html.elem("time", attrs: (datetime: updated.display()), updated.display()) + [)] }
+    #if page.pdf [· #html.elem("a", attrs: (href: page.slug + ".pdf", target: "_blank", rel: "noopener"), "pdf")]
   ]
 ]
 

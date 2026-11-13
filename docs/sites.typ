@@ -35,7 +35,7 @@ A site is a Typst file that sets it up with `site` and includes its pages, in an
   [`nav`], [the header's links: `(label, href)` pairs, `href` from the site's root, or a full URL],
   [`footer`], [`(links: (label: url))`, and `copyright: "..."` for a © line],
   [`home`], [a heading above the home page's posts],
-  [`credit`], [a small "made with tdg" link in the footer's corner; `false` hides it],
+  [`credit`], [a small "tdg-built website" link in the footer's corner; `false` hides it],
   [`search`], [a search box in the docs' sidebar],
   [`files`], [other files to publish, as paths: downloads, data, ...],
 )
@@ -48,7 +48,7 @@ Each page starts with a show rule saying what it is. Its slug is its URL.
   columns: 3,
   [*template*], [*URL*], [],
   [`post.with(slug, title:, date:, author:, description:, pdf: true)`], [`posts/<slug>/`],
-    [dated, with its author and a reading time, listed newest first on the home page and in the feed, and also published as a PDF linked under its title],
+    [dated, with its author, listed newest first on the home page and in the feed, and also published as a PDF linked under its title],
   [`standalone.with(slug, title:, pdf: false)`], [`<slug>/`], [a page that isn't a post, such as an about page or a CV: no date, no footer; it lays out its own headings],
   [`doc.with(slug, title:, order:, description:)`], [`<slug>/`, or the front page for `"index"`], [documentation: a sidebar in `order`, previous and next links, and the page's contents],
 )
@@ -60,7 +60,7 @@ the front page.
 
 A site's files are published at the same place they have in the project: `posts/hopf/figures/hook.gif` is served
 at `<site>/posts/hopf/figures/hook.gif`. Components publish what they're given as paths, such as
-`widget(widget: path("torus_widget.py"))`, so a page's files come along without being listed; `site(files: ...)`
+`widget(path("torus.wgw"))`, so a page's files come along without being listed; `site(files: ...)`
 publishes others. Strings are used as URLs, as they are.
 
 = Links
