@@ -1,4 +1,4 @@
-<img src="assets/logo.svg" width="56" alt="">
+<img src="assets/tdg-icon.svg" width="56" alt="">
 
 # Typst Docs Generator
 

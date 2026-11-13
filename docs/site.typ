@@ -7,7 +7,7 @@
   title: "tdg",
   theme: "docs",
   url: "https://frisbro303.github.io/tdg/",
-  icon: path("../assets/logo.svg"),
+  icon: path("../assets/tdg-icon.svg"),
   nav: (("GitHub", "https://github.com/frisbro303/tdg"),),
   search: true,
 )
