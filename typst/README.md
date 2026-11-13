@@ -1,37 +1,38 @@
 # tdg
 
-Interactive 3D figures, numbered theorems, callouts, source listings and API references, for Typst documents
-compiled to **HTML or PDF**. Every function works in both: in HTML it emits elements that a site styles (and a
-figure's widget runs, with [wgw](https://github.com/frisbro303/wgw)); in a PDF it lays out an equivalent.
-
-It's the library of [tdg](https://github.com/frisbro303/tdg), which builds websites from Typst, but it works in
-any document.
+Websites from Typst, built by `typst compile` alone, and the components their pages are made of: interactive 3D
+figures, numbered theorems, callouts, source listings, themed images and API references generated from Python
+docstrings. Every component works in HTML and in PDF.
 
 ```typ
-#import "@preview/tdg:0.1.0": *
-
-#theorem(title: [Hopf])[Every map $S^3 -> S^2$ of Hopf invariant one is a fibration.]
-#proof[By inspection.]
-
-#callout(kind: "tip", title: [Try it])[Drag the figure below.]
-
-#widget(widget: "torus_widget.py", view: (-60, 35), still: image("torus.png"),
-        caption: [A torus, colored by its Gaussian curvature.])
+// site.typ
+#import "@preview/tdg:0.2.0": *
+#show: site.with(title: "My notes", theme: "blog", url: "https://me.github.io/")
+#include "posts/hopf/main.typ"
 ```
 
-## Functions
+```typ
+// posts/hopf/main.typ
+#import "@preview/tdg:0.2.0": *
+#show: post.with("hopf", title: "Hopf fibrations", date: "2026-11-03")
 
-| function | |
+#theorem(title: [Hopf])[Every map $S^3 -> S^2$ of Hopf invariant one is a fibration.] <thm:hopf>
+#widget(widget: path("torus_widget.py"), view: (-60, 35), still: image("torus.png"), caption: [A torus.])
+```
+
+```sh
+typst compile --features html,bundle --format bundle site.typ _site                    # the site
+typst compile --features html,bundle --format bundle --input tdg=pdf site.typ _site    # and its PDFs
+```
+
+| | |
 |---|---|
-| `widget(widget:, src:, still:, caption:, up:, view:, pick:, flat:, height:, alt:, url:, credit:)` | an interactive 3D figure (wgw); in a PDF, its `still` |
-| `theorem`, `lemma`, `proposition`, `corollary`, `definition`, `example` | numbered boxes, sharing one count: `#lemma(title: [...])[...]` |
-| `theorem-kind(kind, name)` | another kind: `#let conjecture = theorem-kind("conjecture", "Conjecture")` |
-| `proof(body, title:)` | a proof, ending in a square |
-| `callout(body, kind:, title:)` | an aside: `"note"`, `"tip"` or `"warning"` |
-| `source-code(name, text, lang:)` | a file's source under its name: `#source-code("x.py", read("x.py"))` |
-| `responsive(wide, narrow)` | two layouts: `narrow` on phones, `wide` elsewhere and in PDFs |
-| `themed-image(name, description, ext:, print:)` | an image with a dark-theme version (`name-dark.ext`); `print` in PDFs |
-| `api(path, members:)` | a Python object's reference, from data tdg extracts from its docstrings |
+| `site.with(title:, theme:, url:, nav:, footer:, icon:, css:, search:, ...)` | a site: its settings, home page, feed and files |
+| `post.with(slug, title:, date:, description:)` | a dated post, with a reading time and a PDF |
+| `standalone.with(slug, title:)`, `doc.with(slug, title:, order:)` | a page; a page of docs, with a sidebar |
+| `widget(widget:, src:, data:, still:, caption:, ...)` | an interactive 3D figure; in a PDF, its `still` |
+| `theorem`, `lemma`, `definition`, ..., `theorem-kind`, `proof` | numbered, referenceable boxes |
+| `callout`, `source-code`, `responsive`, `themed-image` | asides, files' sources, two layouts, two themes |
+| `python-api(source, module:)`, `api(data, path)` | a Python module's reference, read by tdg's plugin |
 
-HTML output needs Typst's HTML export (`typst compile --features html --format html`). Interactive figures need
-wgw's script on the page, which tdg adds; see [its docs](https://frisbro303.github.io/tdg/typst/).
+Docs: https://frisbro303.github.io/tdg/

@@ -1,0 +1,21 @@
+[package]
+name = "tdg-plugin"
+version = "0.2.0"
+edition = "2021"
+description = "tdg's Typst plugin: Python modules' API, from their source and Google-style docstrings."
+publish = false
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+wasm-minimal-protocol = "0.1"
+rustpython-parser = "0.3"
+serde_json = "1"
+regex-lite = "0.1"
+
+[profile.release]
+opt-level = "s"
+lto = true
+codegen-units = 1
+strip = true

@@ -16,9 +16,9 @@
 #callout(kind: "tip", title: [Hint])[Use it.]
 #callout[A plain note.]
 #responsive($ a + b + c $, $ a \ + b \ + c $)
-#source-code("example.py", "print(1)\n")
-#themed-image("chart", [A chart.], ext: "gif")
-#themed-image("chart", "Alt only.", print: rect(width: 2cm, height: 1cm))
+#source-code("example.py", text: "print(1)\n")
+#themed-image("chart.gif", "chart-dark.gif", [A chart.])
+#themed-image("chart.png", "chart-dark.png", "Alt only.")
 // Negative angles must reach HTML as ASCII minus signs, which JavaScript can read.
 #widget(src: "m.obj", view: (-50, 25))
 // Captions with math still give plain alt text.

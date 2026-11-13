@@ -1,13 +1,13 @@
 [package]
 name = "tdg"
-version = "0.1.0"
+version = "0.2.0"
 entrypoint = "lib.typ"
 compiler = "0.15.0"
 authors = ["Felix Granum <https://github.com/frisbro303>"]
 license = "MIT"
-description = "Interactive 3D figures, theorems, callouts and API references, for documents compiled to HTML or PDF."
+description = "Websites from Typst, built by typst compile: blogs and docs with theorems, callouts and interactive 3D figures."
 repository = "https://github.com/frisbro303/tdg"
 homepage = "https://frisbro303.github.io/tdg/"
-keywords = ["html", "website", "theorem", "3d", "interactive", "documentation"]
-categories = ["components", "visualization"]
+keywords = ["html", "website", "blog", "documentation", "theorem", "3d", "interactive"]
+categories = ["components", "visualization", "layout"]
 exclude = ["tests"]

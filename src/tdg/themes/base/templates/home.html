@@ -1,4 +1,0 @@
-{% extends "base.html" %}
-{% block head %}<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>{{ site.title }}</title>{% endblock %}
-{% block body_attrs %} class="home"{% endblock %}
-{% block main %}{% if site.home %}<h2>{{ site.home }}</h2>{% endif %}{% for post in posts %}<a class="row" href="{{ link(post.url) }}"><time datetime="{{ post.day }}">{{ post.day }}</time><div><h3>{{ post.title | safe }}</h3>{% if post.description %}<p>{{ post.description | safe }}</p>{% endif %}</div></a>{% endfor %}{% endblock %}

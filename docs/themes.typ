@@ -1,56 +1,35 @@
-#import "@local/tdg:0.1.0": *
-#set document(title: "Themes", description: "tdg's blog and docs themes, and making your own.")
+#import "@local/tdg:0.2.0": *
+#show: doc.with("themes", title: "Themes", order: 4, description: "tdg's blog and docs themes, and your own.")
 
-A theme is how a site looks: its templates (the HTML around each page) and its static files (stylesheets,
-scripts). tdg has two, and a site can have its own.
+A theme is how a site's pages are laid out as HTML: Typst functions that build each page's `<html>`, and a
+stylesheet. tdg has two:
 
 #table(
   columns: 2,
   [*theme*], [],
-  [`blog`], [for writing: a serif text column, posts listed by date. The default.],
-  [`docs`], [for software: sans-serif, a header across the page, a sidebar of pages and their contents. This site.],
+  [`"blog"`], [for writing: a serif text column, posts listed by date. The default.],
+  [`"docs"`], [for software: sans-serif, a header across the page, a sidebar of pages and their contents. This site.],
 )
 
-```toml
-[site]
-theme = "docs"
+= Your own look
+
+The simplest way is CSS: keep a theme's layout, and add your stylesheet, or replace the theme's with yours:
+
+```typ
+#show: site.with(theme: "blog", css: (path("theme/style.css"),), theme-style: false)
 ```
 
-= Your own theme
+A theme can also be a dictionary over a built-in one, replacing what it names: its `css` (a file in tdg's assets),
+`fonts`, `layout` (a function from the site's settings, the page and its body to the page's `<html>`), or `home`
+(the home page's list of posts).
 
-Set `theme` to a folder in your site, with either or both of:
-
-- `templates/`: templates that replace tdg's, by name. Anything not there comes from tdg's base templates.
-- `static/`: files published in `_tdg/`, beside (or replacing) tdg's. `static/style.css` is the theme's
-  stylesheet.
-
-```toml
-[site]
-theme = "theme"      # ./theme/templates/, ./theme/static/
+```typ
+#show: site.with(theme: (base: "blog", fonts: "https://fonts.googleapis.com/css2?family=Inter&display=swap"))
 ```
 
-To change a template or two of a built-in theme instead, put them in the site's `templates/` folder.
+= Styling components
 
-= Templates
-
-Templates are #link("https://jinja.palletsprojects.com")[Jinja]. tdg's base templates are:
-
-#table(
-  columns: 2,
-  [*template*], [],
-  [`base.html`], [every page: `<head>`, the header, `main`, the footer],
-  [`_head.html`, `_header.html`, `_footer.html`], [their parts],
-  [`post.html`, `page.html`, `doc.html`], [an entry of each kind],
-  [`home.html`], [the home page, listing posts],
-)
-
-They get `site` (the settings), `entry` (the page: `title`, `description`, `url`, `day`, `minutes`, `toc`), `body`
-and `head` (Typst's output), `root` (the path back to the site's root), `link(href)` (a path from the site's root,
-made relative), `posts` (on the home page), and, for docs, `docs`, `prev` and `next`.
-
-= Styling tdg's components
-
-Every theme gets `_tdg/components.css`, which lays out what the Typst library makes (theorems, callouts, API
-references, the docs layout) using the theme's colors, as custom properties: `--bg`, `--text`, `--muted`,
-`--line`, `--panel`, `--link`, `--accent`, `--mono` and `--width`. A theme that sets these gets them all for free,
+Every theme gets tdg's `components.css`, which lays out what the components make (theorems, callouts, API
+references, the docs layout) with the theme's colors, as custom properties: `--bg`, `--text`, `--muted`,
+`--line`, `--panel`, `--link`, `--accent`, `--mono` and `--width`. A stylesheet that sets these styles them all,
 and the light and dark versions follow `data-theme` on `<html>`, which the theme switch sets.

@@ -1,10 +1,18 @@
 #!/bin/sh
-# Compile the tests to PDF and to HTML; fails on any error.
+# Compile the tests: the components to PDF and HTML, and a small site as a bundle (its pages, then its PDFs). Files
+# are published at their place in the project, which is the package here (--root ..): tests/site/...
 set -e
 cd "$(dirname "$0")"
+out=$(mktemp -d)
 for test in *.typ; do
-  typst compile --root .. "$test" "/tmp/tdg-test-${test%.typ}.pdf"
-  typst compile --root .. --features html --format html "$test" "/tmp/tdg-test-${test%.typ}.html" 2>&1 \
-    | grep -v "html export\|hint:" || true
+  typst compile --root .. "$test" "$out/${test%.typ}.pdf"
+  typst compile --root .. --features html --format html "$test" "$out/${test%.typ}.html" 2>/dev/null
 done
-echo "tests passed"
+typst compile --root .. --features html,bundle --format bundle site/site.typ "$out/site" 2>/dev/null
+typst compile --root .. --features html,bundle --format bundle --input tdg=pdf site/site.typ "$out/site" 2>/dev/null
+for file in index.html posts/hello/index.html posts/hello/hello.pdf tests/site/posts/hello/torus_widget.py about/index.html \
+            about/about.pdf reference/index.html feed.xml _tdg/search.json _tdg/wgw/wgw.js; do
+  [ -f "$out/site/$file" ] || { echo "missing from the site: $file"; exit 1; }
+done
+grep -q 'id="pkg.Thing.twice"' "$out/site/reference/index.html" || { echo "the reference lacks pkg.Thing.twice"; exit 1; }
+echo "tests passed ($out)"

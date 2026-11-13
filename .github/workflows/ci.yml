@@ -1,5 +1,5 @@
-# Test the Typst library (PDF and HTML), and build tdg's docs with tdg; on main, publish them to GitHub Pages.
-# (Pages must be set to deploy from GitHub Actions: Settings > Pages > Source.)
+# Test the Typst package (PDF, HTML and a bundled site), test the plugin, and build tdg's docs with tdg; on main,
+# publish them to GitHub Pages. (Pages deploy from GitHub Actions: Settings > Pages > Source.)
 name: CI
 on:
   push:
@@ -24,9 +24,13 @@ jobs:
       - uses: typst-community/setup-typst@v5
         with:
           typst-version: 0.15.0
+      - run: cd plugin && cargo test
       - run: ./typst/tests/run.sh
-      - run: pip install . "pagefind[bin]"
-      - run: tdg build docs
+      - name: Install this tdg as @local/tdg
+        run: |
+          mkdir -p ~/.local/share/typst/packages/local/tdg
+          cp -R typst ~/.local/share/typst/packages/local/tdg/0.2.0
+      - run: typst compile --root . --features html,bundle --format bundle docs/site.typ docs/_site
       - uses: actions/upload-pages-artifact@v5
         with:
           path: docs/_site/
