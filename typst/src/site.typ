@@ -28,7 +28,8 @@
 )
 
 #let _assets = ("components.css", "blog.css", "docs.css", "theme.js", "tdg.svg", "search.js")
-#let _wgw = ("wgw.js", "io.js", "patch.js", "widget.js", "style.js", "logo.svg", "core/wgw_core.js", "core/wgw_core_bg.wasm")
+#let _wgw = ("wgw.js", "io.js", "patch.js", "widget.js", "widget-worker.js", "style.js", "logo.svg", "core/wgw_core.js",
+  "core/wgw_core_bg.wasm")
 
 #let _escape(s) = s.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;").replace("\"", "&quot;")
 
