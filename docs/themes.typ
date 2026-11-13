@@ -8,8 +8,8 @@ looks. tdg has three:
 #table(
   columns: 3,
   [*theme*], [*templates*], [],
-  [`website`], [`home`, `standalone`], [for a site of pages, such as a personal site: a serif text column],
-  [`blog`], [`post`, `home`, `standalone`], [for writing: the website theme, and dated posts with PDFs; list them on the home page with `#listing("post")`],
+  [`website`], [`home`, `standalone`], [for a site of pages, such as a personal site: a serif text column (`website.css`)],
+  [`blog`], [`post`, `home`, `standalone`], [for writing: the website theme's look with posts' headers (`blog.css` after `website.css`), and dated posts with PDFs; list them on the home page with `#listing("post")`],
   [`docs`], [`doc`, `standalone`], [for software: sans-serif, a header across the page, a sidebar of pages and their contents, and search. This site.],
 )
 
@@ -44,7 +44,7 @@ A look is three things, which every template takes:
 #table(
   columns: 2,
   [*setting*], [],
-  [`css`], [its stylesheets: tdg's (`"blog.css"`, `"docs.css"`), paths (published with the site), or URLs],
+  [`css`], [its stylesheets: paths (published with the site), URLs, or tdg's own, from its themes' looks: `blog.look.css + (path("extra.css"),)` adds yours after the blog's],
   [`fonts`], [a stylesheet URL for web fonts, or `none`],
   [`layout`], [a function from the site's settings, the page and its `<main>` to the page's `<html>`: tdg's `page-layout`, or your own, from tdg's `head`, `header` and `footer`],
 )

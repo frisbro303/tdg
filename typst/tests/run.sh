@@ -20,6 +20,8 @@ grep -q 'href="./notes/tori/"' "$out/site/index.html" || { echo "the home page d
 grep -q 'Tori · geometry' "$out/site/notes/tori/index.html" || { echo "the note lacks its own header"; exit 1; }
 grep -q '<entry><title>Hello' "$out/site/feed.xml" || { echo "the feed lacks the post"; exit 1; }
 grep -q 'href="../../tests/site/note.css"' "$out/site/notes/tori/index.html" || { echo "the note lacks its template's stylesheet"; exit 1; }
-grep -q '_tdg/blog.css' "$out/site/notes/tori/index.html" || { echo "the note lacks tdg's blog.css"; exit 1; }
+grep -q '_tdg/website.css' "$out/site/notes/tori/index.html" || { echo "the note lacks tdg's website.css"; exit 1; }
+grep -q '_tdg/blog.css' "$out/site/notes/tori/index.html" && { echo "the note has the blog's stylesheet"; exit 1; }
+grep -q '_tdg/website.css.*_tdg/blog.css' "$out/site/posts/hello/index.html" || { echo "the post lacks the blog's stylesheets"; exit 1; }
 grep -q '_tdg/docs.css' "$out/site/reference/index.html" || { echo "the doc lacks docs.css"; exit 1; }
 echo "tests passed ($out)"

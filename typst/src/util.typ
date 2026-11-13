@@ -49,20 +49,22 @@
 /// Call within `context`.
 #let file-url(file) = if type(file) == str { file } else { relative(path-string(file), page-url.get()) }
 
-/// Publish a path's file on the site, at its place in the project; strings (URLs) are left alone.
-#let publish(file) = if type(file) != str and file != none {
+/// Publish a path's file on the site, at its place in the project; anything else (URLs, tdg's own files) is left
+/// alone.
+#let publish(file) = if type(file) == path {
   [#metadata((path: file, out: path-string(file))) <tdg-asset>]
 }
 
-// ---- Stylesheets: a template's `css` is tdg's own (a name: "blog.css", "docs.css"), paths, or URLs.
+// ---- Stylesheets: a template's `css` is tdg's own (from its themes' looks), paths, or URLs.
 
-#let _builtin-css = ("blog.css", "docs.css")
+/// One of tdg's own stylesheets, in assets/, as its themes' looks give it.
+#let tdg-css(name) = (tdg-css: name)
 
 /// The stylesheets of the page being laid out, as its template gives them.
 #let page-css = state("tdg-page-css", ())
 
 /// A stylesheet's URL from the current page. Call within `context`.
-#let css-url(css) = if type(css) == str and css in _builtin-css { root() + "_tdg/" + css } else { file-url(css) }
+#let css-url(css) = if type(css) == dictionary { root() + "_tdg/" + css.tdg-css } else { file-url(css) }
 
 /// A stylesheet's text, for what Typst draws with the page's colors (widgets' stills); a URL's isn't read.
-#let css-text(css) = if type(css) == str { if css in _builtin-css { read("../assets/" + css) } else { "" } } else { read(css) }
+#let css-text(css) = if type(css) == dictionary { read("../assets/" + css.tdg-css) } else if type(css) == str { "" } else { read(css) }

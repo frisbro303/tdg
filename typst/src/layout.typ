@@ -164,9 +164,12 @@
   _relative-links(_anchored(_document(site, page, if class != none { (class: class) } else { (:) }, main)))
 }
 
-/// The looks of tdg's themes. `blog` (also the website theme's): a serif text column. `docs`: sans-serif, for a
-/// sidebar of pages and their contents.
+#let _serif = "https://fonts.googleapis.com/css2?family=IBM+Plex+Mono&family=Libertinus+Serif:ital,wght@0,400;0,600;1,400&display=swap"
+
+/// The looks of tdg's themes. `website`: a serif text column. `blog`: the website's, and posts' headers. `docs`:
+/// sans-serif, for a sidebar of pages and their contents.
 #let looks = (
-  blog: (css: ("blog.css",), fonts: "https://fonts.googleapis.com/css2?family=IBM+Plex+Mono&family=Libertinus+Serif:ital,wght@0,400;0,600;1,400&display=swap", layout: page-layout),
-  docs: (css: ("docs.css",), fonts: none, layout: page-layout),
+  website: (css: (tdg-css("website.css"),), fonts: _serif, layout: page-layout),
+  blog: (css: (tdg-css("website.css"), tdg-css("blog.css")), fonts: _serif, layout: page-layout),
+  docs: (css: (tdg-css("docs.css"),), fonts: none, layout: page-layout),
 )

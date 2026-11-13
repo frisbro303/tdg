@@ -1,9 +1,15 @@
-// The blog theme: the website theme's look and templates (`standalone`, `home`), and `post`. Give the site a home
-// page listing the posts, `#listing("post")`.
+// The blog theme: the website theme's look with posts' headers, its templates (`standalone`, `home`), and `post`.
+// Give the site a home page listing the posts, `#listing("post")`.
 
 #import "../site.typ": template, to-date, pdf-title
-#import "../layout.typ": post-header
-#import "website.typ": look, standalone, home
+#import "../layout.typ": looks, post-header
+
+/// Its look, which its templates share: the website theme's, and posts' headers.
+#let look = looks.blog
+
+/// The website theme's `standalone` and `home`, with the blog's look.
+#let standalone = template("page", ..look, header: page => none, footer: false)
+#let home = template("home", ..look, url: slug => "", main: (site, page, body) => body, class: "home")
 
 #let _dated(page) = page + (date: to-date(page.date), updated: if page.updated != none { to-date(page.updated) })
 

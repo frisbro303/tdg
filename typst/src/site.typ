@@ -29,7 +29,7 @@
   nav: (), footer: none, credit: true, search: false, feed: none,
 )
 
-#let _assets = ("components.css", "blog.css", "docs.css", "theme.js", "tdg.svg", "search.js")
+#let _assets = ("components.css", "website.css", "blog.css", "docs.css", "theme.js", "tdg.svg", "search.js")
 #let _wgw = ("wgw.js", "io.js", "patch.js", "widget.js", "widget-worker.js", "style.js", "logo.svg", "core/wgw_core.js",
   "core/wgw_core_bg.wasm")
 
@@ -198,8 +198,8 @@
 /// - pdf-header (function): From the page to what's above its body in its PDF.
 /// - pdf (bool): Whether its pages are also PDFs by default, <url><slug>.pdf.
 /// - footer (bool): Whether its pages have the site's footer.
-/// - css (array): Its stylesheets: tdg's ("blog.css", "docs.css"), paths, or URLs. Every page also has tdg's
-///   components.css, before them.
+/// - css (array): Its stylesheets: tdg's (from its themes' looks, as `blog.look.css`), paths, or URLs. Every page
+///   also has tdg's components.css, before them.
 /// - fonts (str, none): A stylesheet URL for web fonts.
 /// - layout (function): From the site's settings, the page and its <main> to the page's <html>: tdg's
 ///   `page-layout`, or your own.

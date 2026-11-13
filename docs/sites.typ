@@ -108,7 +108,7 @@ keeps its own in a file its pages import, which is its own #link("/themes/")[the
   [`class`], [a class for its pages' `<body>`, for stylesheets],
   [`search`], [whether its pages are in the site's search],
   [`tab-title`], [a function from the site and the page to the browser tab's title],
-  [`css`], [its stylesheets: tdg's (`"blog.css"`, `"docs.css"`), paths, or URLs; every page also has tdg's `components.css`],
+  [`css`], [its stylesheets: tdg's (from its themes' looks, as `blog.look.css`), paths, or URLs; every page also has tdg's `components.css`],
   [`fonts`], [a stylesheet URL for web fonts],
   [`layout`], [a function from the site, the page and its `<main>` to the page's `<html>`: tdg's `page-layout`, or your own],
 )
