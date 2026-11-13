@@ -366,7 +366,8 @@ mod tests {
 
     #[test]
     fn wgw() {
-        let source = std::fs::read_to_string(concat!(env!("CARGO_MANIFEST_DIR"), "/../../wgw/python/wgw.py")).unwrap();
+        // A copy of wgw's module (github.com/frisbro303/wgw), as a real-world test.
+        let source = std::fs::read_to_string(concat!(env!("CARGO_MANIFEST_DIR"), "/tests/wgw.py")).unwrap();
         let r = api(&source, "wgw", "reference").unwrap();
         assert_eq!(r["wgw.Widget"]["signature"], "Widget(scene=dict(), controls=dict(), on_change=None, on_pick=None, grid=False, picked=None, fps=30, loop=False)");
         assert_eq!(r["wgw.Mesh"]["signature"], "Mesh(vertices, faces, values=None, data=None, **params)");

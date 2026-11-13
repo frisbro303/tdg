@@ -14,6 +14,13 @@
 // two compiles because a page in both would have each of its labels twice, which Typst doesn't allow.
 #let _pdfs() = sys.inputs.at("tdg", default: "site") == "pdf"
 
+// A post's author: its own, or the site's.
+#let _author(author) = if author != auto { author } else {
+  let site = _site.get()
+  if site != none { site.author } else { none }
+}
+
+
 #let _defaults = (
   title: "", author: none, lang: "en", url: none, description: none,
   theme: "blog", theme-style: true, fonts: none, css: (), js: (), icon: none,
@@ -52,7 +59,7 @@
 /// - theme-style (bool): Whether to use the theme's stylesheet (with `css` as well), or only the site's.
 /// - fonts (str, none): A stylesheet URL for web fonts, instead of the theme's.
 /// - nav (array): The header's links: `(("about", "about/"), ("GitHub", "https://..."))`, from the site's root.
-/// - footer (dictionary, none): `(copyright: "...", links: (github: "https://..."))`.
+/// - footer (dictionary, none): `(links: (github: "https://..."))`, and a line `(copyright: "...")` if you want one.
 /// - home (str, none): A heading above the home page's posts.
 /// - credit (bool): A small "made with tdg" link in the footer.
 /// - search (bool): A search box in docs.
@@ -130,6 +137,7 @@
 } else if not _pdfs() {
   let site = _site.get()
   if site == none { site = _defaults + (theme: themes.blog) }
+  let page = if page.at("author", default: none) == auto { page + (author: _author(auto)) } else { page }
   [#metadata(page.url) <tdg-start>]
   document(page.url + "index.html", title: page.title, description: page.description)[
     #page-url.update(page.url)
@@ -138,21 +146,29 @@
   [#metadata(page.url) <tdg-end>]
 } else {
   if page.pdf {
-    document(page.url + page.slug + ".pdf", format: "pdf", title: page.title, description: page.description)[
+    let author = page.at("author", default: none)
+    if author == auto { author = _author(auto) }
+    document(page.url + page.slug + ".pdf", format: "pdf", title: page.title, description: page.description,
+      author: if author != none { author } else { () })[
       #set std.page(..page.at("pdf-page", default: (:)))  // set here: Typst allows page set rules only at a document's top
       #_fresh[#pdf-header #body]
     ]
   }
 }
 
-// A PDF's title, and for posts their date and reading time, as on the web.
-#let _pdf-header(title, date: none, minutes: none) = {
+// A PDF's title, and for posts their author, date and reading time, as on the web.
+#let _pdf-header(title, date: none, minutes: none, author: none) = {
   align(center, block(below: 1.8em)[
     #text(1.7em, weight: "bold", title)
     #if date != none {
       linebreak()
       v(0.2em)
-      text(0.9em, fill: luma(100))[#date.display("[month repr:long] [day padding:none], [year]")#if minutes != none [ · #minutes min read]]
+      context {
+        let author = _author(author)
+        let parts = (if author != none { author }, date.display("[month repr:long] [day padding:none], [year]"),
+          if minutes != none [#minutes min read]).filter(x => x != none)
+        text(0.9em, fill: luma(100), parts.join[ · ])
+      }
     }
   ])
 }
@@ -163,20 +179,21 @@
 /// - slug (str): Its URL: posts/<slug>/.
 /// - title (str): Its title.
 /// - date (datetime, str): When it was published: a datetime, or "YYYY-MM-DD".
+/// - author (str, auto, none): Who wrote it; by default the site's author.
 /// - description (str, none): A line about it, for the home page and search engines.
 /// - pdf (bool): Also publish it as a PDF, posts/<slug>/<slug>.pdf, linked under its title.
 /// - pdf-page (dictionary): Page settings for its PDF, such as `(margin: 2cm)`: Typst allows `set page` only at a
 ///   document's top, which a page's content isn't.
-#let post(slug, title: none, date: none, description: none, pdf: true, pdf-page: (:), body) = {
+#let post(slug, title: none, date: none, author: auto, description: none, pdf: true, pdf-page: (:), body) = {
   assert(title != none, message: "a post needs a title")
   assert(date != none, message: "a post needs a date, such as date: \"2026-11-03\"")
   let date = _date(date)
   let url = "posts/" + slug + "/"
   let words = plain-text(body).split().len()
   let page = (kind: "post", slug: slug, url: url, title: title, date: date, description: description, pdf: pdf,
-    minutes: calc.max(1, calc.ceil(words / 200)), pdf-page: pdf-page)
+    minutes: calc.max(1, calc.ceil(words / 200)), pdf-page: pdf-page, author: author)
   [#metadata((url: url, title: title, date: date, description: description)) <tdg-post>]
-  _page(page, _pdf-header(title, date: date, minutes: page.minutes), body)
+  _page(page, _pdf-header(title, date: date, minutes: page.minutes, author: author), body)
 }
 
 /// A page that isn't a post, such as an about page or a CV: no date, no footer; it lays out its own headings. Use

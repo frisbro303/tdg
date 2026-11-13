@@ -21,6 +21,7 @@
     #html.elem("meta", attrs: (name: "viewport", content: "width=device-width, initial-scale=1"))
     #html.elem("title", title)
     #if page.description != none { html.elem("meta", attrs: (name: "description", content: page.description)) }
+    #if page.at("author", default: none) not in (none, auto) { html.elem("meta", attrs: (name: "author", content: page.author)) }
     #let fonts = if site.fonts != none { site.fonts } else { theme.fonts }
     #if fonts != none {
       if fonts.contains("fonts.googleapis.com") {
@@ -67,7 +68,7 @@
 #let footer(site) = context if site.footer != none or site.credit {
   html.elem("footer", attrs: (class: "site-footer"))[
     #if site.footer != none {
-      html.elem("div")[© #datetime.today().year() #site.footer.at("copyright", default: site.author)]
+      if "copyright" in site.footer { html.elem("div")[© #datetime.today().year() #site.footer.copyright] }
       html.elem("div", attrs: (class: "contact"),
         site.footer.at("links", default: (:)).pairs().map(((label, url)) => html.elem("a", attrs: (href: url), label)).join())
     }
@@ -107,6 +108,7 @@
 #let _post-header(page) = html.elem("div", attrs: (class: "post-header"))[
   #html.elem("h1", page.title)
   #html.elem("div", attrs: (class: "meta"))[
+    #if page.at("author", default: none) not in (none, auto) [#html.elem("span", attrs: (class: "author"), page.author) · ]
     #html.elem("time", attrs: (datetime: page.date.display()), page.date.display())
     · #page.minutes min read
     #if page.pdf [· #html.elem("a", attrs: (href: page.slug + ".pdf"), "pdf")]
