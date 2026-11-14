@@ -393,12 +393,12 @@ mod tests {
     }
 }
 
-/// A still of a wgw figure, as a PNG: the figure (as JSON: its view, size and the site's CSS; see wgw-still's
+/// A still of a wgw figure, as a PNG: the figure (as JSON: its view, size and the site's CSS; see wgw-headless's
 /// `Figure`), and either its mesh file, or its widget's setup and first scene (from the widget's own `setup` and
 /// `scene`, which tdg calls, the widget being a plugin itself). Drawn by wgw's own renderer on the CPU, with the
 /// page's shaders.
 #[cfg_attr(target_arch = "wasm32", wasm_func)]
 pub fn still(figure: &[u8], mesh: &[u8], setup: &[u8], scene: &[u8]) -> Result<Vec<u8>, String> {
-    let figure: wgw_still::Figure = serde_json::from_slice(figure).map_err(|e| format!("the figure: {e}"))?;
-    wgw_still::png(&figure, mesh, setup, scene)
+    let figure: wgw_headless::Figure = serde_json::from_slice(figure).map_err(|e| format!("the figure: {e}"))?;
+    wgw_headless::png(&figure, mesh, setup, scene)
 }

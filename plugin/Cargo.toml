@@ -13,8 +13,9 @@ wasm-minimal-protocol = "0.1"
 rustpython-parser = "0.3"
 serde_json = "1"
 regex-lite = "0.1"
-# Stills of wgw figures: a figure's scene drawn by wgw's renderer on the CPU, with the page's shaders.
-wgw-still = { git = "https://github.com/frisbro303/wgw" }
+# Stills of wgw figures: a figure's scene drawn by wgw's renderer on the CPU, with the page's shaders (wgw-headless,
+# without its optional video and widgets features).
+wgw-headless = { git = "https://github.com/frisbro303/wgw" }
 
 [profile.release]
 opt-level = "s"

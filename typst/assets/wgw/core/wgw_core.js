@@ -1,3 +1,32 @@
+/**
+ * The shared context, on a canvas the page keeps out of the document, and the shaders compiled on it.
+ */
+export class Gpu {
+    __destroy_into_raw() {
+        const ptr = this.__wbg_ptr;
+        this.__wbg_ptr = 0;
+        GpuFinalization.unregister(this);
+        return ptr;
+    }
+    free() {
+        const ptr = this.__destroy_into_raw();
+        wasm.__wbg_gpu_free(ptr, 0);
+    }
+    /**
+     * @param {HTMLCanvasElement} canvas
+     */
+    constructor(canvas) {
+        const ret = wasm.gpu_new(canvas);
+        if (ret[2]) {
+            throw takeFromExternrefTable0(ret[1]);
+        }
+        this.__wbg_ptr = ret[0];
+        GpuFinalization.register(this, this.__wbg_ptr, this);
+        return this;
+    }
+}
+if (Symbol.dispose) Gpu.prototype[Symbol.dispose] = Gpu.prototype.free;
+
 export class MeshFile {
     static __wrap(ptr) {
         const obj = Object.create(MeshFile.prototype);
@@ -73,6 +102,9 @@ export class MeshFile {
 }
 if (Symbol.dispose) MeshFile.prototype[Symbol.dispose] = MeshFile.prototype.free;
 
+/**
+ * A figure: its scene, cameras and input, drawn on the page's `Gpu`. Freeing it frees what it made there.
+ */
 export class Viewer {
     __destroy_into_raw() {
         const ptr = this.__wbg_ptr;
@@ -134,16 +166,27 @@ export class Viewer {
         return v1;
     }
     /**
-     * @param {HTMLCanvasElement} canvas
+     * @param {Gpu} gpu
      */
-    constructor(canvas) {
-        const ret = wasm.viewer_new(canvas);
-        if (ret[2]) {
-            throw takeFromExternrefTable0(ret[1]);
-        }
-        this.__wbg_ptr = ret[0];
+    constructor(gpu) {
+        _assertClass(gpu, Gpu);
+        const ret = wasm.viewer_new(gpu.__wbg_ptr);
+        this.__wbg_ptr = ret;
         ViewerFinalization.register(this, this.__wbg_ptr, this);
         return this;
+    }
+    /**
+     * @param {number} pane
+     * @returns {Float32Array | undefined}
+     */
+    pane_center(pane) {
+        const ret = wasm.viewer_pane_center(this.__wbg_ptr, pane);
+        let v1;
+        if (ret[0] !== 0) {
+            v1 = getArrayF32FromWasm0(ret[0], ret[1]).slice();
+            wasm.__wbindgen_free(ret[0], ret[1] * 4, 4);
+        }
+        return v1;
     }
     /**
      * @param {number} x
@@ -226,6 +269,15 @@ export class Viewer {
     }
     reset() {
         wasm.viewer_reset(this.__wbg_ptr);
+    }
+    /**
+     * Carry on with a new Gpu, after the old one's context was lost and restored: the scene and cameras are
+     * kept, and everything is uploaded again on the next frame.
+     * @param {Gpu} gpu
+     */
+    restore(gpu) {
+        _assertClass(gpu, Gpu);
+        wasm.viewer_restore(this.__wbg_ptr, gpu.__wbg_ptr);
     }
     /**
      * @param {string} layer
@@ -427,6 +479,13 @@ export class Viewer {
         } finally {
             wasm.__wbindgen_free(deferred1_0, deferred1_1, 1);
         }
+    }
+    /**
+     * @param {number} dyaw
+     * @param {number} dpitch
+     */
+    turn_by(dyaw, dpitch) {
+        wasm.viewer_turn_by(this.__wbg_ptr, dyaw, dpitch);
     }
     /**
      * @param {number} factor
@@ -635,6 +694,18 @@ function __wbg_get_imports() {
         },
         __wbg_deleteBuffer_ffa760fd3b0b5ef1: function(arg0, arg1) {
             arg0.deleteBuffer(arg1);
+        },
+        __wbg_deleteFramebuffer_0ec884f89db72a3e: function(arg0, arg1) {
+            arg0.deleteFramebuffer(arg1);
+        },
+        __wbg_deleteFramebuffer_ffdb1bee4c92ae4c: function(arg0, arg1) {
+            arg0.deleteFramebuffer(arg1);
+        },
+        __wbg_deleteRenderbuffer_3a6e1676ab926e0f: function(arg0, arg1) {
+            arg0.deleteRenderbuffer(arg1);
+        },
+        __wbg_deleteRenderbuffer_895ff607251243a9: function(arg0, arg1) {
+            arg0.deleteRenderbuffer(arg1);
         },
         __wbg_deleteTexture_1653a9994a44215e: function(arg0, arg1) {
             arg0.deleteTexture(arg1);
@@ -936,6 +1007,9 @@ function __wbg_get_imports() {
     };
 }
 
+const GpuFinalization = (typeof FinalizationRegistry === 'undefined')
+    ? { register: () => {}, unregister: () => {} }
+    : new FinalizationRegistry(ptr => wasm.__wbg_gpu_free(ptr, 1));
 const MeshFileFinalization = (typeof FinalizationRegistry === 'undefined')
     ? { register: () => {}, unregister: () => {} }
     : new FinalizationRegistry(ptr => wasm.__wbg_meshfile_free(ptr, 1));

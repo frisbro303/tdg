@@ -13,23 +13,67 @@
 // curves and arrows without values), --wgw-edge, --wgw-height.
 //
 // From JS: WGW.mount(element, options) returns the viewer: viewer.on("pick", fn), viewer.apply(patch),
-// viewer.reset().
+// viewer.reset(), viewer.destroy(); WGW.unmount(element) destroys an element's viewer. options.widget gives the
+// figure a widget directly, such as WGW.remoteWidget(url, setup), whose scenes a server makes (wgw for Python).
+//
+// Every figure draws with one WebGL context (browsers keep only about 16 alive), on a canvas kept off the page:
+// a figure draws into its lower left corner, then copies that onto its own canvas. If the context is lost (the GPU
+// reset), figures wait, and carry on as they were when it's restored.
+//
+// A figure can be focused (Tab): the arrow keys turn it (with shift, finely), + and - zoom, 0 resets, and Enter or
+// space picks the point at the center of its first view, which a small ring marks while it's focused.
 
-import init, { Viewer as Core } from "./core/wgw_core.js";
+import init, { Gpu, Viewer as Core } from "./core/wgw_core.js";
 import { fetchBytes, parseMesh } from "./io.js";
 import { animates, controlInputs } from "./patch.js";
-import { isWidget, loadWidget } from "./widget.js";
+import { isWidget, loadWidget, remoteWidget } from "./widget.js";
 import { readStyle, rgbaList } from "./style.js";
 
 let wasm = null;
-const loadCore = () => (wasm ||= init());  // only on pages with figures
+const shared = { canvas: null, gpu: null, lost: false };
+// The core and the shared context: only on pages with figures, and made once.
+async function loadGpu() {
+  await (wasm ||= init());
+  if (!shared.gpu) {
+    const canvas = document.createElement("canvas");
+    canvas.addEventListener("webglcontextlost", (e) => {
+      e.preventDefault();  // so the browser restores it
+      shared.lost = true;
+      viewers.forEach((v) => v.status(RESET));
+    });
+    // A new Gpu on the restored context, and each viewer moves to it with its scene and cameras as they were.
+    canvas.addEventListener("webglcontextrestored", () => {
+      const old = shared.gpu;
+      try {
+        shared.gpu = new Gpu(canvas);
+      } catch (err) {
+        return viewers.forEach((v) => v.fail(err));
+      }
+      shared.lost = false;
+      for (const v of viewers) {
+        v.core?.restore(shared.gpu);
+        if (v.statusEl.textContent === RESET) v.status("");
+        v.requestRender();
+      }
+      old.free();
+    });
+    shared.gpu = new Gpu(canvas);
+    shared.canvas = canvas;
+  }
+  return shared.gpu;
+}
 const DPR_MAX = 2;
+const RESET = "graphics reset: waiting for the GPU…";
+const TURN_KEYS = { ArrowLeft: [1, 0], ArrowRight: [-1, 0], ArrowUp: [0, -1], ArrowDown: [0, 1] };  // as a drag turns
 const REDUCED_MOTION = matchMedia("(prefers-reduced-motion: reduce)");
 
 const STYLE = `
 .wgw{position:relative}
 .wgw canvas{display:block;width:100%;height:var(--wgw-height,420px);touch-action:none;cursor:grab;outline:none}
 .wgw canvas.dragging{cursor:grabbing}
+.wgw canvas:focus-visible{outline:2px solid var(--wgw-control,currentColor);outline-offset:2px}
+.wgw-aim{position:absolute;display:none;width:12px;height:12px;margin:-7px 0 0 -7px;border:1.5px solid var(--wgw-control,currentColor);border-radius:50%;opacity:.7;pointer-events:none}
+.wgw canvas:focus-visible~.wgw-aim{display:block}
 .wgw-status{position:absolute;left:0;right:0;top:0;height:var(--wgw-height,420px);display:flex;align-items:center;justify-content:center;padding:0 24px;text-align:center;font:12px ui-monospace,monospace;opacity:.6;pointer-events:none;white-space:pre-line}
 .wgw-status:empty{display:none}
 .wgw-controls{display:flex;flex-wrap:wrap;justify-content:center;gap:6px 18px;font:13px ui-monospace,monospace}
@@ -91,16 +135,20 @@ export class Viewer {
       fps: +(options.fps ?? d.fps ?? 30),
       flat: options.flat ?? flag(d.flat),
       credit: options.credit ?? d.credit !== "false",
+      widget: options.widget,
     };
     el.wgw = this;
     el.classList.add("wgw", "wgw-loading");  // nothing shows until the mesh, the widget and its first results are in
 
     this.canvas = document.createElement("canvas");
     this.canvas.setAttribute("role", "img");
-    this.canvas.setAttribute("aria-label", d.label || "Interactive 3D figure: drag to turn, pinch or ctrl+scroll to zoom");
+    this.canvas.setAttribute("aria-label", d.label || "Interactive 3D figure: drag or use the arrow keys to turn, pinch, ctrl+scroll or + and - to zoom, Enter to pick the point at the center");
+    this.canvas.tabIndex = 0;
+    this.aim = Object.assign(document.createElement("div"), { className: "wgw-aim" });  // where Enter picks
     this.statusEl = Object.assign(document.createElement("div"), { className: "wgw-status", textContent: "loading…" });
     this.controlsEl = Object.assign(document.createElement("div"), { className: "wgw-controls" });
-    el.append(this.canvas, this.statusEl, this.controlsEl);
+    el.append(this.canvas, this.aim, this.statusEl, this.controlsEl);
+    this.added = [this.canvas, this.aim, this.statusEl, this.controlsEl];  // what destroy() takes away
     if (this.options.credit) {  // a small link to wgw; data-credit="false" (or CSS) hides it
       const credit = Object.assign(document.createElement("a"), {
         className: "wgw-credit", href: "https://github.com/frisbro303/wgw", target: "_blank", rel: "noopener",
@@ -108,6 +156,7 @@ export class Viewer {
       const logo = Object.assign(document.createElement("img"), { src: new URL("logo.svg", import.meta.url).href, alt: "", width: 12, height: 12 });
       credit.append(logo, "wgw");
       el.append(credit);
+      this.added.push(credit);
     }
 
     this.controls = {};
@@ -121,31 +170,38 @@ export class Viewer {
 
   async boot() {
     try {
-      await loadCore();
-      this.core = new Core(this.canvas);
+      const gpu = await loadGpu();
+      if (this.destroyed) return;
+      this.core = new Core(gpu);
+      this.screen = this.canvas.getContext("2d");
     } catch (err) {
       return this.fail(err);
     }
     this.core.set_options(this.options.up, this.options.view[0], this.options.view[1], this.options.view[2] ?? 1, REDUCED_MOTION.matches);
     this.restyle();
     this.listen();
-    this.canvas.addEventListener("webglcontextlost", (e) => { e.preventDefault(); this.status("graphics reset: reload the page"); });
-    new ResizeObserver(() => this.requestRender()).observe(this.canvas);
+    if (shared.lost) this.status(RESET);
+    const resized = new ResizeObserver(() => this.requestRender());
+    resized.observe(this.canvas);
     // Load when the viewer nears the screen; draw only while it's on it.
     let started = false;
-    new IntersectionObserver((entries) => {
+    const seen = new IntersectionObserver((entries) => {
       this.visible = entries[entries.length - 1].isIntersecting;
       if (this.visible && !started) { started = true; this.start(); }
       if (this.visible) this.requestRender();
-    }, { rootMargin: "400px" }).observe(this.el);
+    }, { rootMargin: "400px" });
+    seen.observe(this.el);
+    this.observers = [resized, seen];
     viewers.push(this);
   }
 
   async start() {
     const o = this.options;
     try {
+      if (o.widget) return this.useWidget(o.widget);
       if (o.src) {
         const bytes = await fetchBytes(o.src);
+        if (this.destroyed) return;
         if (isWidget(bytes)) {
           await this.startWidget(bytes);
           return;
@@ -183,6 +239,7 @@ export class Viewer {
   }
 
   fail(err) {
+    if (this.destroyed) return;
     this.reveal();
     console.error(err);
     const lines = String((err && err.message) || err).trim().split("\n");
@@ -210,7 +267,7 @@ export class Viewer {
 
   // Apply a patch (see patch.js): add, change or remove layers, then play any frames it brought.
   apply(patch, animate) {
-    if (!patch) return;
+    if (!patch || !this.core) return;
     const core = this.core;
     for (const [name, layer] of Object.entries(patch.layers || {})) {
       delete this.themed[name];
@@ -242,6 +299,23 @@ export class Viewer {
     this.requestRender();
   }
 
+  // Take the figure off the page: stop its widget, free what it holds on the GPU, and remove what wgw added to
+  // its element. A page that removes figures (a single-page app) calls this, or WGW.unmount(element).
+  destroy() {
+    if (this.destroyed) return;
+    this.destroyed = true;
+    this.observers?.forEach((o) => o.disconnect());
+    this.widget?.terminate();
+    this.widget = null;
+    this.core?.free();
+    this.core = null;
+    const i = viewers.indexOf(this);
+    if (i >= 0) viewers.splice(i, 1);
+    this.added.forEach((e) => e.remove());
+    this.el.classList.remove("wgw-loading");
+    delete this.el.wgw;
+  }
+
   // ---- drawing: only when something changed, and only while on screen
 
   requestRender() {
@@ -252,13 +326,24 @@ export class Viewer {
 
   frame(t) {
     this.frameRequested = false;
-    if (!this.visible) return;
+    if (!this.visible || !this.core || shared.lost) return;
     const dpr = Math.min(window.devicePixelRatio || 1, DPR_MAX);
     const w = Math.max(1, Math.round(this.canvas.clientWidth * dpr)), h = Math.max(1, Math.round(this.canvas.clientHeight * dpr));
     if (this.canvas.width !== w || this.canvas.height !== h) { this.canvas.width = w; this.canvas.height = h; }
+    // Draw on the shared canvas (as large as the largest figure), then copy the corner drawn in: the drawing is
+    // still there until the browser next shows the page, so it needs no preserveDrawingBuffer.
+    const gl = shared.canvas;
+    if (gl.width < w) gl.width = w;
+    if (gl.height < h) gl.height = h;
     const moving = this.core.frame(t, w, h, dpr);
+    this.screen.clearRect(0, 0, w, h);
+    this.screen.drawImage(gl, 0, gl.height - h, w, h, 0, 0, w, h);
     const errors = this.core.take_errors();
     if (errors) this.fail(errors);
+    if (document.activeElement === this.canvas) {  // the aim, at the first view's center
+      const c = this.core.pane_center(0);
+      if (c) Object.assign(this.aim.style, { left: `${this.canvas.offsetLeft + c[0]}px`, top: `${this.canvas.offsetTop + c[1]}px` });
+    }
     if (this.hoverAt) {
       const [x, y] = this.hoverAt;
       this.hoverAt = null;
@@ -300,6 +385,21 @@ export class Viewer {
       this.requestRender();
     }, { passive: false });
     canvas.addEventListener("dblclick", () => this.reset());
+    canvas.addEventListener("focus", () => this.requestRender());  // to place the aim
+    canvas.addEventListener("keydown", (e) => {
+      if (e.altKey || e.ctrlKey || e.metaKey) return;
+      const step = ((e.shiftKey ? 3 : 15) * Math.PI) / 180;
+      if (e.key in TURN_KEYS) core.turn_by(TURN_KEYS[e.key][0] * step, TURN_KEYS[e.key][1] * step);
+      else if (e.key === "+" || e.key === "=") core.zoom_by(1 / 1.2);
+      else if (e.key === "-" || e.key === "_") core.zoom_by(1.2);
+      else if (e.key === "0" || e.key === "Home") core.reset();
+      else if (e.key === "Enter" || e.key === " ") {
+        const c = core.pane_center(0);
+        if (c && this.options.pick !== "none") this.picked(core.pick(c[0], c[1]), false);
+      } else return;
+      e.preventDefault();  // no page scroll
+      this.requestRender();
+    });
   }
 
   picked(hit, hovering) {
@@ -318,8 +418,15 @@ export class Viewer {
   // ---- widgets
 
   async startWidget(bytes) {
-    this.widget = await loadWidget(bytes);
-    const info = this.widget.setup;
+    const widget = await loadWidget(bytes);
+    if (this.destroyed) return widget.terminate();
+    this.useWidget(widget);
+  }
+
+  // A widget: {setup, scene(state, frames, first, onFirst), cancel(), terminate()}, as loadWidget gives.
+  useWidget(widget) {
+    this.widget = widget;
+    const info = widget.setup;
     this.frames = Math.max(1, info.frames || 1);
     this.fps = info.fps;
     this.loop = info.loop;
@@ -365,9 +472,11 @@ export class Viewer {
 
   // Ask the widget for its scene in the current state (every frame of an animation, stacked), at most one at a
   // time: while it's busy, newer requests collapse into one, so dragging a slider never builds up a backlog.
+  // An animation's frames for a state that's moved on are cancelled, so the newer one starts sooner.
   update(animate) {
     this.wanted = { animate: animate || this.wanted?.animate };
     if (!this.busy) this.flush();
+    else if (this.frames > 1) this.widget?.cancel();
   }
 
   async flush() {
@@ -376,12 +485,24 @@ export class Viewer {
     this.wanted = null;
     this.busy = true;
     try {
-      const patch = await this.widget.scene({ controls: { ...this.controls }, picks: this.picks }, this.frames);
-      this.apply(patch, animate);
+      // An animation shows one frame as soon as it's built, while the rest are: the start, or (as a control
+      // moves) the frame on screen, so it changes in place.
+      const first = animate ? 0 : this.core.current_frame();
+      const state = { controls: { ...this.controls }, picks: this.picks };
+      const patch = await this.widget.scene(state, this.frames, first, (one) => {
+        if (this.destroyed) return;
+        this.apply(one, false);
+        if (this.revealWhenIdle) this.reveal();
+      });
+      if (patch) {
+        if (this.statusEl.textContent.startsWith("error")) this.status("");  // the widget's working again
+        this.apply(patch, animate);
+      } else this.wanted = { animate: animate || this.wanted?.animate };  // cancelled: what's wanted now, still
     } catch (err) {
       this.fail(err);
     }
     this.busy = false;
+    if (this.destroyed) return;
     if (this.revealWhenIdle && !this.wanted) this.reveal();
     this.flush();
   }
@@ -389,6 +510,10 @@ export class Viewer {
 
 export function mount(el, options) {
   return el.wgw || new Viewer(el, options);
+}
+
+export function unmount(el) {
+  el.wgw?.destroy();
 }
 
 function autoload() {
@@ -407,4 +532,4 @@ function autoload() {
 
 if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", autoload); else autoload();
 
-window.WGW = { mount, Viewer, loadWidget, version: "0.1.0" };
+window.WGW = { mount, unmount, Viewer, loadWidget, remoteWidget, version: "0.1.0" };  // the version: build.sh writes it in, from Cargo.toml

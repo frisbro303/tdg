@@ -715,7 +715,7 @@ dependencies = [
  "rustpython-parser",
  "serde_json",
  "wasm-minimal-protocol",
- "wgw-still",
+ "wgw-headless",
 ]
 
 [[package]]
@@ -873,9 +873,23 @@ dependencies = [
 ]
 
 [[package]]
+name = "wgw-headless"
+version = "0.1.0"
+source = "git+https://github.com/frisbro303/wgw#8b016cac00fe5ba7653bf7c7355ac47d20ea565d"
+dependencies = [
+ "glam",
+ "naga",
+ "png",
+ "serde",
+ "serde_json",
+ "wgw-render",
+ "wgw-scene",
+]
+
+[[package]]
 name = "wgw-render"
-version = "0.2.0"
-source = "git+https://github.com/frisbro303/wgw#60a392ace55afb8feb95e8b405ed043195c5345f"
+version = "0.1.0"
+source = "git+https://github.com/frisbro303/wgw#8b016cac00fe5ba7653bf7c7355ac47d20ea565d"
 dependencies = [
  "bytemuck",
  "glam",
@@ -885,27 +899,13 @@ dependencies = [
 
 [[package]]
 name = "wgw-scene"
-version = "0.2.0"
-source = "git+https://github.com/frisbro303/wgw#60a392ace55afb8feb95e8b405ed043195c5345f"
+version = "0.1.0"
+source = "git+https://github.com/frisbro303/wgw#8b016cac00fe5ba7653bf7c7355ac47d20ea565d"
 dependencies = [
  "bytemuck",
  "glam",
  "serde",
  "serde_json",
-]
-
-[[package]]
-name = "wgw-still"
-version = "0.1.0"
-source = "git+https://github.com/frisbro303/wgw#60a392ace55afb8feb95e8b405ed043195c5345f"
-dependencies = [
- "glam",
- "naga",
- "png",
- "serde",
- "serde_json",
- "wgw-render",
- "wgw-scene",
 ]
 
 [[package]]
