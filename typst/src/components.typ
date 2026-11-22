@@ -20,7 +20,11 @@
 /// - height (length, str, none): The canvas's height, such as `360pt` or "380px".
 /// - alt (str, none): A description for screen readers; by default the caption's text.
 /// - credit (bool): A small "wgw" link in the figure's corner.
-#let widget(src, caption: none, up: "z", view: none, pick: "click", flat: false, height: none, alt: none, credit: true) = {
+/// - controls (dictionary): For the PDF's still: controls set otherwise than the widget starts them, by name, such as
+///   `(round: 10)` (a slider's value, a checkbox's state, how many times a button has been pressed). The page
+///   starts as the widget does.
+#let widget(src, caption: none, up: "z", view: none, pick: "click", flat: false, height: none, alt: none, credit: true,
+  controls: (:)) = {
   assert(up in ("x", "y", "z"), message: "up is \"x\", \"y\" or \"z\", not " + repr(up))
   assert(pick in ("click", "hover", "none"), message: "pick is \"click\", \"hover\" or \"none\", not " + repr(pick))
   // Its file is published with the site (marked inside the figure, so a label on it labels the figure).
@@ -55,7 +59,9 @@
       let w = plugin(file)
       let setup = w.setup(empty)
       let info = json(setup)
-      let controls = info.controls.pairs().map(((name, c)) => (name, if type(c) == array { c.at(2) } else { c })).to-dict()
+      // Each control at its start (a slider's value, a checkbox's state, a button's 0 presses), unless given.
+      let start = c => if type(c) == array { c.at(2) } else if c == "button" { 0 } else { c }
+      let controls = info.controls.pairs().map(((name, c)) => (name, start(c))).to-dict() + controls
       let picks = if info.picked != none { ((vertex: info.picked, layer: "mesh", point: none, frame: 0),) } else { () }
       let scene = w.scene(empty, bytes(json.encode((controls: controls, picks: picks, frame: 0))))
       tdg-plugin.still(bytes(json.encode(figure)), empty, setup, scene)

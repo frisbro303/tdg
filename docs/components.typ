@@ -29,6 +29,7 @@ figure's first frame: tdg runs the widget as a plugin, and wgw's own renderer dr
   [`height`], [the canvas's height, such as `360pt` or `"380px"`],
   [`alt`], [a description for screen readers; by default the caption's text],
   [`credit`], [a small "wgw" link in the corner; `false` hides it],
+  [`controls`], [for the PDF's still: controls set otherwise than the widget starts them, such as `(round: 10)` (a slider's value, a checkbox's state, a button's presses)],
 )
 
 = Theorems and proofs

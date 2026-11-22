@@ -407,6 +407,22 @@ export class Viewer {
         wasm.viewer_set_options(this.__wbg_ptr, ptr0, len0, val2, val3, val4, val5);
     }
     /**
+     * @param {Float32Array | number[]} rects
+     */
+    set_pane_layout(rects) {
+        const ptr0 = passArrayF32ToWasm0(rects, wasm.__wbindgen_malloc);
+        const len0 = WASM_VECTOR_LEN;
+        wasm.viewer_set_pane_layout(this.__wbg_ptr, ptr0, len0);
+    }
+    /**
+     * @param {Float32Array | number[]} groups
+     */
+    set_pane_links(groups) {
+        const ptr0 = passArrayF32ToWasm0(groups, wasm.__wbindgen_malloc);
+        const len0 = WASM_VECTOR_LEN;
+        wasm.viewer_set_pane_links(this.__wbg_ptr, ptr0, len0);
+    }
+    /**
      * @param {Float32Array | number[]} widths
      */
     set_pane_widths(widths) {
