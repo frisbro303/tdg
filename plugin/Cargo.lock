@@ -875,7 +875,7 @@ dependencies = [
 [[package]]
 name = "wgw-headless"
 version = "0.1.0"
-source = "git+https://github.com/frisbro303/wgw#57fe7ab7253eedf581dc35202f9a84fb31403807"
+source = "git+https://github.com/frisbro303/wgw#c97d3d5a1e46507b98ed58eda6a45e828172f861"
 dependencies = [
  "glam",
  "naga",
@@ -889,7 +889,7 @@ dependencies = [
 [[package]]
 name = "wgw-render"
 version = "0.1.0"
-source = "git+https://github.com/frisbro303/wgw#57fe7ab7253eedf581dc35202f9a84fb31403807"
+source = "git+https://github.com/frisbro303/wgw#c97d3d5a1e46507b98ed58eda6a45e828172f861"
 dependencies = [
  "bytemuck",
  "glam",
@@ -900,7 +900,7 @@ dependencies = [
 [[package]]
 name = "wgw-scene"
 version = "0.1.0"
-source = "git+https://github.com/frisbro303/wgw#57fe7ab7253eedf581dc35202f9a84fb31403807"
+source = "git+https://github.com/frisbro303/wgw#c97d3d5a1e46507b98ed58eda6a45e828172f861"
 dependencies = [
  "bytemuck",
  "glam",
